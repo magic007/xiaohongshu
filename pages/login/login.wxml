@@ -1,0 +1,33 @@
+<view class="login-container">
+  <view class="logo">
+    <text>小红书</text>
+  </view>
+  
+  <view class="form">
+    <view class="input-wrapper">
+      <view class="input-group">
+        <view class="country-code">+86</view>
+        <input type="number" placeholder="请输入手机号" bindinput="onPhoneInput" value="{{phone}}" maxlength="11"/>
+      </view>
+      
+      <view class="input-group">
+        <input type="number" placeholder="请输入验证码" bindinput="onCodeInput" value="{{code}}" maxlength="6"/>
+        <view class="get-code {{!canGetCode ? 'disabled' : ''}}" bindtap="getCode">
+          {{countdown > 0 ? countdown + 's' : '获取验证码'}}
+        </view>
+      </view>
+    </view>
+
+    <view class="btn-wrapper">
+      <button class="login-btn {{canLogin ? 'active' : ''}}" bindtap="handleLogin">登录</button>
+      
+      <view class="agreement">
+        <checkbox checked="{{isAgree}}" bindtap="toggleAgreement"></checkbox>
+        我已阅读并同意
+        <navigator url="/pages/agreement/user" class="link">《用户协议》</navigator>
+        <navigator url="/pages/agreement/privacy" class="link">《隐私政策》</navigator>
+        <navigator url="/pages/agreement/child" class="link">《儿童/青少年个人信息保护规则》</navigator>
+      </view>
+    </view>
+  </view>
+</view> 

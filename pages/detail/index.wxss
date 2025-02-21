@@ -1,0 +1,14 @@
+/* pages/detail/index.wxss */
+.event-section {
+  margin: 20px;
+  padding: 10px;
+  border: 1px solid #eee;
+  border-radius: 5px;
+}
+
+.input-box {
+  border: 1px solid #ddd;
+  padding: 5px;
+  margin: 10px 0;
+  border-radius: 3px;
+}

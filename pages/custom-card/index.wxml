@@ -1,0 +1,16 @@
+<!-- pages/index/index.wxml -->
+<view class="container">
+  <!-- 基础用法 -->
+  <custom-card 
+    title="我的第一个组件" 
+    content="点击标题展开/收起内容"
+  />
+  
+  <!-- 循环使用 -->
+  <custom-card 
+    wx:for="{{cardList}}" 
+    wx:key="id"
+    title="{{item.title}}"
+    content="{{item.content}}"
+  />
+</view>

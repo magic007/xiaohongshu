@@ -1,0 +1,112 @@
+.login-container {
+  padding: 0 40rpx;
+  background: #fff;
+  min-height: 100vh;
+}
+
+.logo {
+  text-align: center;
+  padding-top: 120rpx;
+  padding-bottom: 60rpx;
+}
+
+.logo image {
+  width: 160rpx;
+  height: 160rpx;
+}
+
+.logo text {
+  font-size: 46rpx;
+  color: #333;
+  font-weight: 500;
+}
+
+.form {
+  margin-top: 40rpx;
+}
+
+.input-wrapper {
+  margin-bottom: 40rpx;
+}
+
+.input-group {
+  display: flex;
+  align-items: center;
+  border-bottom: 1rpx solid #f0f0f0;
+  padding-bottom: 20rpx;
+  margin-bottom: 50rpx;
+}
+
+.country-code {
+  font-size: 34rpx;
+  color: #333;
+  margin-right: 30rpx;
+  font-weight: 500;
+}
+
+input {
+  flex: 1;
+  font-size: 34rpx;
+  color: #333;
+}
+
+input::placeholder {
+  color: #999;
+  font-size: 34rpx;
+}
+
+.get-code {
+  font-size: 30rpx;
+  color: #ff2442;
+  padding: 0 20rpx;
+  font-weight: 500;
+}
+
+.get-code.disabled {
+  color: #ffc0c0;
+}
+
+.btn-wrapper {
+  margin-top: 60rpx;
+  padding: 0;
+}
+
+.login-btn {
+  width: 670rpx !important;
+  height: 88rpx;
+  text-align: center;
+  background: #ffc0c0;
+  color: #fff;
+  font-size: 32rpx;
+  border-radius: 44rpx;
+  font-weight: 500;
+  border: none;
+  padding: 0;
+  line-height: 88rpx;
+}
+
+.login-btn.active {
+  background: #ff2442;
+}
+
+.agreement {
+  margin-top: 40rpx;
+  display: flex;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  font-size: 24rpx;
+  color: #999;
+  line-height: 1.5;
+  justify-content: center;
+}
+
+.agreement checkbox {
+  transform: scale(0.7);
+  margin: -4rpx 4rpx 0 0;
+}
+
+.link {
+  color: #576b95;
+  display: inline;
+  margin: 0 4rpx;
+} 

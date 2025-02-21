@@ -1,0 +1,5 @@
+<!-- components/custom-card/index.wxml -->
+<view class="card">
+  <view class="card-title" bindtap="toggleContent">{{title}}</view>
+  <view class="card-content" wx:if="{{showContent}}">{{content}}</view>
+</view>

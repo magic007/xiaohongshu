@@ -1,0 +1,32 @@
+<!--pages/detail/index.wxml-->
+<text>pages/detail/index.wxml</text>
+
+{{message}}
+
+<view>讲师：{{userInfo.name}} - {{userInfo.title}}</view>
+
+<view wx:for="{{courseList}}">{{item}}</view>
+
+<!-- 1. 点击事件示例 -->
+<view class="event-section">
+  <button bindtap="handleTap" type="primary">点击我</button>
+  <view>点击次数：{{tapCount}}</view>
+</view>
+
+<!-- 2. 输入事件示例 -->
+<view class="event-section">
+  <input 
+    bindinput="handleInput" 
+    placeholder="请输入内容" 
+    value="{{inputValue}}"
+    class="input-box"
+  />
+  <view>你输入的内容：{{inputValue}}</view>
+</view>
+
+<!-- 3. 表单提交示例 -->
+<form bindsubmit="handleSubmit" class="event-section">
+  <input name="username" placeholder="用户名" class="input-box"/>
+  <input name="age" type="number" placeholder="年龄" class="input-box"/>
+  <button form-type="submit" type="primary">提交表单</button>
+</form>
