@@ -1,7 +1,9 @@
 {
   "pages": [
-    "pages/login/login",
+    "pages/profile/index",
     "pages/index/index",
+    
+    "pages/login/login",
     "pages/custom-card/index",
     "pages/detail/index",
     "pages/logs/logs"
@@ -10,6 +12,21 @@
     "navigationBarTextStyle": "black",
     "navigationBarTitleText": "学生评语大全",
     "navigationBarBackgroundColor": "#ffffff"
+  },
+  "tabBar": {
+    "color": "#999999",
+    "selectedColor": "#333333",
+    "backgroundColor": "#ffffff",
+    "list": [
+      {
+        "pagePath": "pages/index/index",
+        "text": "首页"
+      },
+      {
+        "pagePath": "pages/profile/index",
+        "text": "我的"
+      }
+    ]
   },
   "style": "v2",
   "componentFramework": "glass-easel",
