@@ -64,6 +64,7 @@
   display: flex;
   justify-content: flex-start;
   margin: 32rpx 0;
+  align-items: center;
 }
 
 .stat-item {
@@ -84,16 +85,22 @@
 }
 
 .settings-btn {
-  position: absolute;
-  right: 32rpx;
-  top: 32rpx;
+  margin-left: auto;
+  padding: 12rpx 32rpx;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 32rpx;
+  font-size: 24rpx;
 }
 
 .btn-inner {
-  width: 60rpx;
-  height: 60rpx;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-inner::before {
+  content: '设置';
+  color: #fff;
 }
 
 .content-tabs {
@@ -164,8 +171,24 @@
 .note-image {
   width: 100%;
   padding-bottom: 100%;
-  background: linear-gradient(to bottom, #f0f0f0, #e0e0e0);
   position: relative;
+}
+
+/* 为不同的卡片设置不同的渐变色背景 */
+.note-card:nth-child(4n+1) .note-image {
+  background: linear-gradient(45deg, #FF9A9E, #FAD0C4);
+}
+
+.note-card:nth-child(4n+2) .note-image {
+  background: linear-gradient(45deg, #A18CD1, #FBC2EB);
+}
+
+.note-card:nth-child(4n+3) .note-image {
+  background: linear-gradient(45deg, #84FAB0, #8FD3F4);
+}
+
+.note-card:nth-child(4n+4) .note-image {
+  background: linear-gradient(45deg, #FFD1FF, #FAD0C4);
 }
 
 .note-content {

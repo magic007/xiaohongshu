@@ -2,10 +2,10 @@ Page({
   data: {
     currentTab: 1, // 默认显示收藏tab
     userInfo: {
-      nickname: '小红薯677762ED',
-      userId: '94151738841',
+      nickname: '',
+      userId: '',
       avatar: '',
-      bio: '还没有简介',
+      bio: '',
       stats: {
         following: 0,
         followers: 0,
@@ -13,113 +13,111 @@ Page({
       }
     },
     // 笔记列表
-    noteList: [
-      {
-        id: 1,
-        image: '',
-        title: '今天去吃了一家新开的火锅店，味道真不错',
-        author: {
-          avatar: '',
-          nickname: '小红薯677762ED'
-        },
-        likes: 128
-      },
-      {
-        id: 2,
-        image: '',
-        title: '分享我的护肤心得，从此告别痘痘',
-        author: {
-          avatar: '',
-          nickname: '小红薯677762ED'
-        },
-        likes: 256
-      }
-    ],
+    noteList: [],
     // 收藏列表
-    collectionList: [
-      {
-        id: 1,
-        image: '',
-        title: '老婆自己做的泡菜，不敢吃该怎么拒绝',
-        author: {
-          avatar: '',
-          nickname: '爱吃冰西瓜🍉'
-        },
-        likes: 5366
-      },
-      {
-        id: 2,
-        image: '',
-        title: '超级好吃的家常菜，学会了不用天天点外卖',
-        author: {
-          avatar: '',
-          nickname: '美食达人'
-        },
-        likes: 3288
-      },
-      {
-        id: 3,
-        image: '',
-        title: '分享一个快手早餐的做法，营养美味省时间',
-        author: {
-          avatar: '',
-          nickname: '早餐控'
-        },
-        likes: 2199
-      },
-      {
-        id: 4,
-        image: '',
-        title: '自制美味小零食，解馋又健康，太好吃了',
-        author: {
-          avatar: '',
-          nickname: '甜品控'
-        },
-        likes: 1866
-      }
-    ],
+    collectionList: [],
     // 赞过列表
-    likedList: [
-      {
-        id: 1,
-        image: '',
-        title: '超实用的穿搭技巧，让你轻松提升时尚感',
-        author: {
-          avatar: '',
-          nickname: '穿搭博主'
-        },
-        likes: 8899
-      },
-      {
-        id: 2,
-        image: '',
-        title: '10分钟快速收纳术，让家里永远整整齐齐',
-        author: {
-          avatar: '',
-          nickname: '生活达人'
-        },
-        likes: 6677
-      },
-      {
-        id: 3,
-        image: '',
-        title: '新手化妆必看，手把手教你打造清透妆容',
-        author: {
-          avatar: '',
-          nickname: '美妆达人'
-        },
-        likes: 5544
-      }
-    ]
+    likedList: []
   },
 
   onLoad() {
-    // 页面加载时的逻辑
+    this.getCurrentUser();
+  },
+
+  getCurrentUser() {
+    const current = wx.Bmob.User.current();
+    if (current) {
+      this.setData({
+        'userInfo.nickname': current.nickname || '未设置昵称',
+        'userInfo.userId': current.objectId || '',
+        'userInfo.bio': current.signature || '还没有简介',
+        'userInfo.stats.following': current.followCount || 0,
+        'userInfo.stats.followers': current.fansCount || 0,
+        'userInfo.stats.likes': current.likeCollectCount || 0
+      });
+      // 获取用户的笔记、收藏和点赞数据
+      this.getUserNotes(current.objectId);
+      this.getUserCollections(current.objectId);
+      this.getUserLikes(current.objectId);
+    } else {
+      wx.navigateTo({
+        url: '/pages/login/login'
+      });
+    }
+  },
+
+  // 获取用户的笔记
+  getUserNotes(userId) {
+    const query = wx.Bmob.Query('Note');
+    query.equalTo('author', '==', userId);
+    query.include('author'); // 包含作者信息
+    query.order('-createdAt'); // 按创建时间降序
+    query.find().then(res => {
+      const notes = res.map(note => ({
+        id: note.objectId,
+        image: note.images ? note.images[0] : '',
+        title: note.content,
+        author: {
+          avatar: note.author.avatar || '',
+          nickname: note.author.nickname
+        },
+        likes: note.likeCount || 0
+      }));
+      this.setData({
+        noteList: notes
+      });
+    });
+  },
+
+  // 获取用户的收藏
+  getUserCollections(userId) {
+    const query = wx.Bmob.Query('Favorite');
+    query.equalTo('user', '==', userId);
+    query.include('note', 'note.author'); // 包含笔记和作者信息
+    query.order('-createdAt');
+    query.find().then(res => {
+      const collections = res.map(favorite => ({
+        id: favorite.note.objectId,
+        image: favorite.note.images ? favorite.note.images[0] : '',
+        title: favorite.note.content,
+        author: {
+          avatar: favorite.note.author.avatar || '',
+          nickname: favorite.note.author.nickname
+        },
+        likes: favorite.note.likeCount || 0
+      }));
+      this.setData({
+        collectionList: collections
+      });
+    });
+  },
+
+  // 获取用户的点赞
+  getUserLikes(userId) {
+    const query = wx.Bmob.Query('Like');
+    query.equalTo('user', '==', userId);
+    query.include('note', 'note.author'); // 包含笔记和作者信息
+    query.order('-createdAt');
+    query.find().then(res => {
+      const likes = res.map(like => ({
+        id: like.note.objectId,
+        image: like.note.images ? like.note.images[0] : '',
+        title: like.note.content,
+        author: {
+          avatar: like.note.author.avatar || '',
+          nickname: like.note.author.nickname
+        },
+        likes: like.note.likeCount || 0
+      }));
+      this.setData({
+        likedList: likes
+      });
+    });
   },
 
   switchTab(e) {
     const index = e.currentTarget.dataset.index;
-    if (this.data.currentTab === index) return; // 避免重复切换
+    if (this.data.currentTab == index) return; // 避免重复切换
     this.setData({
       currentTab: index
     });
