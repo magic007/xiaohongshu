@@ -50,19 +50,14 @@
     <!-- 笔记列表 -->
     <view class="content-list" wx:if="{{currentTab == 0}}">
       <view class="grid-container" wx:if="{{noteList.length > 0}}">
-        <view class="note-card" wx:for="{{noteList}}" wx:key="id">
-          <view class="note-image"></view>
-          <view class="note-content">
-            <view class="note-title">{{item.title}}</view>
-            <view class="note-author">
-              <view class="author-avatar"></view>
-              <text class="author-name">{{item.author.nickname}}</text>
-              <view class="like-count">
-                <text class="count">{{item.likes}}</text>
-              </view>
-            </view>
-          </view>
-        </view>
+        <note-card 
+          wx:for="{{noteList}}" 
+          wx:key="id"
+          note="{{item}}"
+          type="{{item.type}}"
+          bind:tap="onTapNote"
+          bind:like="onLikeNote"
+        />
       </view>
       <view class="empty-tip" wx:else>还没有笔记哦</view>
     </view>
@@ -70,19 +65,14 @@
     <!-- 收藏列表 -->
     <view class="content-list" wx:if="{{currentTab == 1}}">
       <view class="grid-container" wx:if="{{collectionList.length > 0}}">
-        <view class="note-card" wx:for="{{collectionList}}" wx:key="id">
-          <view class="note-image"></view>
-          <view class="note-content">
-            <view class="note-title">{{item.title}}</view>
-            <view class="note-author">
-              <view class="author-avatar"></view>
-              <text class="author-name">{{item.author.nickname}}</text>
-              <view class="like-count">
-                <text class="count">{{item.likes}}</text>
-              </view>
-            </view>
-          </view>
-        </view>
+        <note-card 
+          wx:for="{{collectionList}}" 
+          wx:key="id"
+          note="{{item}}"
+          type="{{item.type}}"
+          bind:tap="onTapNote"
+          bind:like="onLikeNote"
+        />
       </view>
       <view class="empty-tip" wx:else>还没有收藏的笔记</view>
     </view>
@@ -90,19 +80,14 @@
     <!-- 赞过列表 -->
     <view class="content-list" wx:if="{{currentTab == 2}}">
       <view class="grid-container" wx:if="{{likedList.length > 0}}">
-        <view class="note-card" wx:for="{{likedList}}" wx:key="id">
-          <view class="note-image"></view>
-          <view class="note-content">
-            <view class="note-title">{{item.title}}</view>
-            <view class="note-author">
-              <view class="author-avatar"></view>
-              <text class="author-name">{{item.author.nickname}}</text>
-              <view class="like-count">
-                <text class="count">{{item.likes}}</text>
-              </view>
-            </view>
-          </view>
-        </view>
+        <note-card 
+          wx:for="{{likedList}}" 
+          wx:key="id"
+          note="{{item}}"
+          type="{{item.type}}"
+          bind:tap="onTapNote"
+          bind:like="onLikeNote"
+        />
       </view>
       <view class="empty-tip" wx:else>还没有赞过的笔记</view>
     </view>

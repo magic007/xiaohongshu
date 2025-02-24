@@ -1,6 +1,47 @@
 <!--index.wxml-->
 <scroll-view class="scrollarea" scroll-y type="list">
-  <view class="container">
-    <text>首页</text>
+  <!-- 自定义导航栏 -->
+  <view class="custom-nav" style="padding-top:{{statusBarHeight}}px">
+    <view class="search-container">
+      <view class="logo">小红书</view>
+      <view class="search-box">
+        <image class="search-icon" src="/assets/images/search.png"></image>
+        <input type="text" placeholder="国家公祭日" placeholder-class="search-placeholder" />
+      </view>
+      <image class="more-icon" src="/assets/images/more.png"></image>
+    </view>
   </view>
+
+  <!-- 主容器 -->
+  <scroll-view 
+    class="scrollarea" 
+    scroll-y 
+    bindscrolltolower="loadMore"
+    enable-back-to-top
+    style="margin-top:{{navHeight}}px"
+  >
+    <!-- 分类导航 -->
+    <scroll-view scroll-x class="nav-scroll" enable-flex>
+      <view class="nav-item {{currentTab === index ? 'active' : ''}}" 
+            wx:for="{{categories}}" 
+            wx:key="index"
+            bindtap="switchTab"
+            data-index="{{index}}">
+        {{item}}
+      </view>
+    </scroll-view>
+
+    <!-- 内容列表 -->
+    <view class="content-list">
+      <view class="card-container">
+        <view class="card-item" wx:for="{{contentList}}" wx:key="id" bindtap="goToDetail" data-id="{{item.id}}">
+          <note-card note="{{item}}"></note-card>
+        </view>
+      </view>
+
+      <!-- 加载更多 -->
+      <view class="loading" wx:if="{{hasMore}}">正在加载更多...</view>
+      <view class="loading" wx:else>没有更多了</view>
+    </view>
+  </scroll-view>
 </scroll-view>

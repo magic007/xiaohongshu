@@ -1,0 +1,17 @@
+<view class="note-card" bindtap="onTapCard">
+  <view class="note-image" style="background: {{gradientBg}}">
+    <view class="video-icon" wx:if="{{type === 'video'}}">
+      <view class="icon-inner"></view>
+    </view>
+  </view>
+  <view class="note-content">
+    <view class="note-title">{{note.title}}</view>
+    <view class="note-author">
+      <view class="author-avatar" style="background: {{gradientBg}}"></view>
+      <text class="author-name">{{note.author.nickname}}</text>
+      <view class="like-count" catchtap="onTapLike">
+        <text class="count">{{note.likes}}</text>
+      </view>
+    </view>
+  </view>
+</view> 

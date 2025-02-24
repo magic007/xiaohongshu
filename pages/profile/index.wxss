@@ -142,24 +142,27 @@
 
 .content-area {
   flex: 1;
-  background: #fff;
+  background: #f8f8f8;
 }
 
 .content-list {
-  padding: 16rpx;
+  min-height: 100vh;
+  background: #f8f8f8;
+}
+
+.grid-container {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20rpx;
+  padding: 20rpx;
 }
 
 .empty-tip {
   text-align: center;
   color: #999;
+  padding: 40rpx 0;
   font-size: 28rpx;
-  padding: 60rpx 0;
-}
-
-.grid-container {
-  display: flex;
-  flex-wrap: wrap;
-  margin: 0 -8rpx;
+  background: #f8f8f8;
 }
 
 .note-card {

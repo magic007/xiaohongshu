@@ -1,11 +1,11 @@
 Page({
   data: {
-    currentTab: 1, // 默认显示收藏tab
+    currentTab: 0,
     userInfo: {
-      nickname: '',
-      userId: '',
       avatar: '',
-      bio: '',
+      nickname: '用户昵称',
+      userId: '123456',
+      bio: '这是个人简介',
       stats: {
         following: 0,
         followers: 0,
@@ -22,9 +22,32 @@ Page({
 
   onLoad() {
     this.getCurrentUser();
-   
   },
 
+  onShow() {
+    // 每次页面显示时刷新数据
+    if (wx.Bmob.User.current()) {
+      this.getCurrentUser();
+    }
+  },
+
+  // 处理笔记点击
+  onTapNote(e) {
+    const { note } = e.detail;
+    wx.navigateTo({
+      url: `/pages/note-detail/index?id=${note.id}`
+    });
+  },
+
+  // 处理点赞
+  onLikeNote(e) {
+    const { note } = e.detail;
+    // TODO: 实现点赞逻辑
+    wx.showToast({
+      title: '点赞成功',
+      icon: 'success'
+    });
+  },
 
   getCurrentUser() {
     const current = wx.Bmob.User.current();
@@ -52,7 +75,6 @@ Page({
   // 获取用户的笔记
   getUserNotes(userId) {
     const query = wx.Bmob.Query('note');
-    // 创建 Pointer 对象
     const pointer = wx.Bmob.Pointer('_User');
     const pointerObject = pointer.set(userId);
     query.equalTo('author', '==', pointerObject);
@@ -61,8 +83,8 @@ Page({
     query.find().then(res => {
       const notes = res.map(note => ({
         id: note.objectId,
-        image: note.images ? note.images[0] : '',
         title: note.content,
+        type: note.type || 'image',
         author: {
           avatar: note.author.avatar || '',
           nickname: note.author.nickname
@@ -72,98 +94,72 @@ Page({
       this.setData({
         noteList: notes
       });
+    }).catch(err => {
+      console.error('获取笔记失败：', err);
     });
   },
 
   // 获取用户的收藏
   getUserCollections(userId) {
     const query = wx.Bmob.Query('favorite');
-    // 创建 Pointer 对象
     const pointer = wx.Bmob.Pointer('_User');
     const pointerObject = pointer.set(userId);
     query.equalTo('user', '==', pointerObject);
-    // 先只查询收藏记录
+    query.include('note', 'note.author');
     query.find().then(favorites => {
-      if (favorites.length === 0) {
-        this.setData({ collectionList: [] });
-        return;
-      }
-
-      // 再查询关联的笔记
-      const noteQuery = wx.Bmob.Query('note');
-      const noteIds = favorites.map(fav => fav.note.objectId);
-      noteQuery.containedIn('objectId', noteIds);
-      noteQuery.include('author');
-      noteQuery.find().then(notes => {
-        // 将笔记数据与收藏记录匹配
-        const collections = favorites.map(favorite => {
-          const note = notes.find(n => n.objectId === favorite.note.objectId);
-          if (!note) return null;
-          return {
-            id: note.objectId,
-            image: note.images ? note.images[0] : '',
-            title: note.content,
-            author: {
-              avatar: note.author ? note.author.avatar || '' : '',
-              nickname: note.author ? note.author.nickname || '未知用户' : '未知用户'
-            },
-            likes: note.likeCount || 0
-          };
-        }).filter(Boolean);
-
-        this.setData({
-          collectionList: collections
-        });
+      const collections = favorites.map(fav => {
+        const note = fav.note;
+        return {
+          id: note.objectId,
+          title: note.content,
+          type: note.type || 'image',
+          author: {
+            avatar: note.author ? note.author.avatar || '' : '',
+            nickname: note.author ? note.author.nickname || '未知用户' : '未知用户'
+          },
+          likes: note.likeCount || 0
+        };
       });
+      this.setData({
+        collectionList: collections
+      });
+    }).catch(err => {
+      console.error('获取收藏失败：', err);
     });
   },
 
   // 获取用户的点赞
   getUserLikes(userId) {
     const query = wx.Bmob.Query('like');
-    // 创建 Pointer 对象
     const pointer = wx.Bmob.Pointer('_User');
     const pointerObject = pointer.set(userId);
     query.equalTo('user', '==', pointerObject);
-    // 先查询点赞记录
+    query.include('note', 'note.author');
     query.find().then(likes => {
-      if (likes.length === 0) {
-        this.setData({ likedList: [] });
-        return;
-      }
-
-      // 再查询关联的笔记
-      const noteQuery = wx.Bmob.Query('note');
-      const noteIds = likes.map(like => like.note.objectId);
-      noteQuery.containedIn('objectId', noteIds);
-      noteQuery.include('author');
-      noteQuery.find().then(notes => {
-        // 将笔记数据与点赞记录匹配
-        const likedNotes = likes.map(like => {
-          const note = notes.find(n => n.objectId === like.note.objectId);
-          if (!note) return null;
-          return {
-            id: note.objectId,
-            image: note.images ? note.images[0] : '',
-            title: note.content,
-            author: {
-              avatar: note.author ? note.author.avatar || '' : '',
-              nickname: note.author ? note.author.nickname || '未知用户' : '未知用户'
-            },
-            likes: note.likeCount || 0
-          };
-        }).filter(Boolean);
-
-        this.setData({
-          likedList: likedNotes
-        });
+      const likedNotes = likes.map(like => {
+        const note = like.note;
+        return {
+          id: note.objectId,
+          title: note.content,
+          type: note.type || 'image',
+          author: {
+            avatar: note.author ? note.author.avatar || '' : '',
+            nickname: note.author ? note.author.nickname || '未知用户' : '未知用户'
+          },
+          likes: note.likeCount || 0
+        };
       });
+      this.setData({
+        likedList: likedNotes
+      });
+    }).catch(err => {
+      console.error('获取点赞失败：', err);
     });
   },
 
   switchTab(e) {
     const index = e.currentTarget.dataset.index;
-    if (this.data.currentTab == index) return; // 避免重复切换
+    if (this.data.currentTab === index) return;
     this.setData({
       currentTab: index
     });

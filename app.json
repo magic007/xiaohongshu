@@ -1,7 +1,8 @@
 {
   "pages": [
-    "pages/profile/index",
     "pages/index/index",
+    "pages/profile/index",
+   
     "pages/settings/index",
     "pages/login/login",
     "pages/custom-card/index",
@@ -11,7 +12,8 @@
   "window": {
     "navigationBarTextStyle": "black",
     "navigationBarTitleText": "学生评语大全",
-    "navigationBarBackgroundColor": "#ffffff"
+    "navigationBarBackgroundColor": "#ffffff",
+    "navigationStyle": "custom"
   },
   "tabBar": {
     "color": "#999999",
@@ -20,13 +22,18 @@
     "list": [
       {
         "pagePath": "pages/index/index",
-        "text": "首页"
+        "iconPath": "assets/images/home.png",
+        "selectedIconPath": "assets/images/home_selected.png"
       },
       {
         "pagePath": "pages/profile/index",
-        "text": "我的"
+        "iconPath": "assets/images/user.png",
+        "selectedIconPath": "assets/images/user_selected.png"
       }
     ]
+  },
+  "usingComponents": {
+    "note-card": "/components/note-card/index"
   },
   "style": "v2",
   "componentFramework": "glass-easel",
