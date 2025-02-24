@@ -22,7 +22,9 @@ Page({
 
   onLoad() {
     this.getCurrentUser();
+   
   },
+
 
   getCurrentUser() {
     const current = wx.Bmob.User.current();
@@ -48,10 +50,13 @@ Page({
 
   // 获取用户的笔记
   getUserNotes(userId) {
-    const query = wx.Bmob.Query('Note');
-    query.equalTo('author', '==', userId);
-    query.include('author'); // 包含作者信息
-    query.order('-createdAt'); // 按创建时间降序
+    const query = wx.Bmob.Query('note');
+    // 创建 Pointer 对象
+    const pointer = wx.Bmob.Pointer('_User');
+    const pointerObject = pointer.set(userId);
+    query.equalTo('author', '==', pointerObject);
+    query.include('author');
+    query.order('-createdAt');
     query.find().then(res => {
       const notes = res.map(note => ({
         id: note.objectId,
@@ -71,46 +76,86 @@ Page({
 
   // 获取用户的收藏
   getUserCollections(userId) {
-    const query = wx.Bmob.Query('Favorite');
-    query.equalTo('user', '==', userId);
-    query.include('note', 'note.author'); // 包含笔记和作者信息
-    query.order('-createdAt');
-    query.find().then(res => {
-      const collections = res.map(favorite => ({
-        id: favorite.note.objectId,
-        image: favorite.note.images ? favorite.note.images[0] : '',
-        title: favorite.note.content,
-        author: {
-          avatar: favorite.note.author.avatar || '',
-          nickname: favorite.note.author.nickname
-        },
-        likes: favorite.note.likeCount || 0
-      }));
-      this.setData({
-        collectionList: collections
+    const query = wx.Bmob.Query('favorite');
+    // 创建 Pointer 对象
+    const pointer = wx.Bmob.Pointer('_User');
+    const pointerObject = pointer.set(userId);
+    query.equalTo('user', '==', pointerObject);
+    // 先只查询收藏记录
+    query.find().then(favorites => {
+      if (favorites.length === 0) {
+        this.setData({ collectionList: [] });
+        return;
+      }
+
+      // 再查询关联的笔记
+      const noteQuery = wx.Bmob.Query('note');
+      const noteIds = favorites.map(fav => fav.note.objectId);
+      noteQuery.containedIn('objectId', noteIds);
+      noteQuery.include('author');
+      noteQuery.find().then(notes => {
+        // 将笔记数据与收藏记录匹配
+        const collections = favorites.map(favorite => {
+          const note = notes.find(n => n.objectId === favorite.note.objectId);
+          if (!note) return null;
+          return {
+            id: note.objectId,
+            image: note.images ? note.images[0] : '',
+            title: note.content,
+            author: {
+              avatar: note.author ? note.author.avatar || '' : '',
+              nickname: note.author ? note.author.nickname || '未知用户' : '未知用户'
+            },
+            likes: note.likeCount || 0
+          };
+        }).filter(Boolean);
+
+        this.setData({
+          collectionList: collections
+        });
       });
     });
   },
 
   // 获取用户的点赞
   getUserLikes(userId) {
-    const query = wx.Bmob.Query('Like');
-    query.equalTo('user', '==', userId);
-    query.include('note', 'note.author'); // 包含笔记和作者信息
-    query.order('-createdAt');
-    query.find().then(res => {
-      const likes = res.map(like => ({
-        id: like.note.objectId,
-        image: like.note.images ? like.note.images[0] : '',
-        title: like.note.content,
-        author: {
-          avatar: like.note.author.avatar || '',
-          nickname: like.note.author.nickname
-        },
-        likes: like.note.likeCount || 0
-      }));
-      this.setData({
-        likedList: likes
+    const query = wx.Bmob.Query('like');
+    // 创建 Pointer 对象
+    const pointer = wx.Bmob.Pointer('_User');
+    const pointerObject = pointer.set(userId);
+    query.equalTo('user', '==', pointerObject);
+    // 先查询点赞记录
+    query.find().then(likes => {
+      if (likes.length === 0) {
+        this.setData({ likedList: [] });
+        return;
+      }
+
+      // 再查询关联的笔记
+      const noteQuery = wx.Bmob.Query('note');
+      const noteIds = likes.map(like => like.note.objectId);
+      noteQuery.containedIn('objectId', noteIds);
+      noteQuery.include('author');
+      noteQuery.find().then(notes => {
+        // 将笔记数据与点赞记录匹配
+        const likedNotes = likes.map(like => {
+          const note = notes.find(n => n.objectId === like.note.objectId);
+          if (!note) return null;
+          return {
+            id: note.objectId,
+            image: note.images ? note.images[0] : '',
+            title: note.content,
+            author: {
+              avatar: note.author ? note.author.avatar || '' : '',
+              nickname: note.author ? note.author.nickname || '未知用户' : '未知用户'
+            },
+            likes: note.likeCount || 0
+          };
+        }).filter(Boolean);
+
+        this.setData({
+          likedList: likedNotes
+        });
       });
     });
   },
