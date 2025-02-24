@@ -2,7 +2,7 @@
   "pages": [
     "pages/profile/index",
     "pages/index/index",
-    
+    "pages/settings/index",
     "pages/login/login",
     "pages/custom-card/index",
     "pages/detail/index",

@@ -1,0 +1,27 @@
+<view class="settings-container">
+  <!-- 头像区域 -->
+  <view class="avatar-section">
+    <view class="section-title">头像</view>
+    <view class="avatar-wrapper" bindtap="chooseAvatar">
+      <image class="avatar" src="{{userInfo.avatar || '/assets/images/default-avatar.png'}}" mode="aspectFill"></image>
+      <view class="edit-text">点击更换</view>
+    </view>
+  </view>
+
+  <!-- 基本信息区域 -->
+  <view class="info-section">
+    <view class="info-item">
+      <view class="item-label">昵称</view>
+      <input class="item-input" value="{{userInfo.nickname}}" placeholder="请输入昵称" bindinput="onNicknameInput"/>
+    </view>
+    <view class="info-item">
+      <view class="item-label">个性签名</view>
+      <textarea class="item-textarea" value="{{userInfo.bio}}" placeholder="介绍一下自己吧" bindinput="onBioInput"/>
+    </view>
+  </view>
+
+  <!-- 保存按钮 -->
+  <view class="button-section">
+    <button class="save-btn" bindtap="saveUserInfo">保存修改</button>
+  </view>
+</view> 

@@ -1,0 +1,98 @@
+.settings-container {
+  min-height: 100vh;
+  background: #f8f8f8;
+  padding: 32rpx;
+}
+
+.avatar-section {
+  background: #fff;
+  border-radius: 16rpx;
+  padding: 32rpx;
+  margin-bottom: 32rpx;
+}
+
+.section-title {
+  font-size: 28rpx;
+  color: #999;
+  margin-bottom: 24rpx;
+}
+
+.avatar-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.avatar {
+  width: 160rpx;
+  height: 160rpx;
+  border-radius: 50%;
+  background: #f0f0f0;
+  margin-bottom: 16rpx;
+}
+
+.edit-text {
+  font-size: 24rpx;
+  color: #666;
+}
+
+.info-section {
+  background: #fff;
+  border-radius: 16rpx;
+  padding: 32rpx;
+  margin-bottom: 32rpx;
+}
+
+.info-item {
+  margin-bottom: 32rpx;
+}
+
+.info-item:last-child {
+  margin-bottom: 0;
+}
+
+.item-label {
+  font-size: 28rpx;
+  color: #999;
+  margin-bottom: 16rpx;
+}
+
+.item-input {
+  width: 100%;
+  height: 80rpx;
+  background: #f8f8f8;
+  border-radius: 8rpx;
+  padding: 0 24rpx;
+  font-size: 28rpx;
+  color: #333;
+}
+
+.item-textarea {
+  width: 100%;
+  height: 160rpx;
+  background: #f8f8f8;
+  border-radius: 8rpx;
+  padding: 24rpx;
+  font-size: 28rpx;
+  color: #333;
+}
+
+.button-section {
+  margin-top: 48rpx;
+}
+
+.save-btn {
+  width: 100%;
+  height: 88rpx;
+  background: #ff2442;
+  color: #fff;
+  font-size: 32rpx;
+  border-radius: 44rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.save-btn:active {
+  opacity: 0.9;
+} 

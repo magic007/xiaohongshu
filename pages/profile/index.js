@@ -33,6 +33,7 @@ Page({
         'userInfo.nickname': current.nickname || '未设置昵称',
         'userInfo.userId': current.objectId || '',
         'userInfo.bio': current.signature || '还没有简介',
+        'userInfo.avatar': current.avatar || '',
         'userInfo.stats.following': current.followCount || 0,
         'userInfo.stats.followers': current.fansCount || 0,
         'userInfo.stats.likes': current.likeCollectCount || 0
@@ -165,6 +166,12 @@ Page({
     if (this.data.currentTab == index) return; // 避免重复切换
     this.setData({
       currentTab: index
+    });
+  },
+
+  goToSettings() {
+    wx.navigateTo({
+      url: '/pages/settings/index'
     });
   }
 }) 

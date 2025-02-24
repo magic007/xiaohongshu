@@ -4,7 +4,7 @@
     <!-- 用户信息 -->
     <view class="user-info">
       <view class="avatar-container">
-        <view class="avatar"></view>
+        <image class="avatar" src="{{userInfo.avatar || '/assets/images/default-avatar.png'}}" mode="aspectFill"></image>
       </view>
       <view class="user-detail">
         <view class="nickname">{{userInfo.nickname}}</view>
@@ -29,7 +29,7 @@
         <text class="number">{{userInfo.stats.likes}}</text>
         <text class="label">获赞与收藏</text>
       </view>
-      <view class="settings-btn">
+      <view class="settings-btn" bindtap="goToSettings">
         <view class="btn-inner"></view>
       </view>
     </view>
