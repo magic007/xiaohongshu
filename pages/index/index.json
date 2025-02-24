@@ -1,6 +1,7 @@
 {
   "usingComponents": {
   },
+  "navigationStyle": "custom",
   "enablePullDownRefresh": true,
   "onReachBottomDistance": 50,
   "backgroundColor": "#ffffff"

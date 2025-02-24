@@ -2,7 +2,6 @@
   "pages": [
     "pages/index/index",
     "pages/profile/index",
-   
     "pages/settings/index",
     "pages/login/login",
     "pages/custom-card/index",
@@ -12,8 +11,7 @@
   "window": {
     "navigationBarTextStyle": "black",
     "navigationBarTitleText": "学生评语大全",
-    "navigationBarBackgroundColor": "#ffffff",
-    "navigationStyle": "custom"
+    "navigationBarBackgroundColor": "#ffffff"
   },
   "tabBar": {
     "color": "#999999",
