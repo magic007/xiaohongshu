@@ -18,16 +18,18 @@
     scroll-y 
     bindscrolltolower="loadMore"
     enable-back-to-top
+    enhanced
+    show-scrollbar="{{false}}"
     style="margin-top:{{navHeight}}px"
   >
     <!-- 分类导航 -->
     <scroll-view scroll-x class="nav-scroll" enable-flex>
       <view class="nav-item {{currentTab === index ? 'active' : ''}}" 
             wx:for="{{categories}}" 
-            wx:key="index"
+            wx:key="objectId"
             bindtap="switchTab"
             data-index="{{index}}">
-        {{item}}
+        {{item.name}}
       </view>
     </scroll-view>
 

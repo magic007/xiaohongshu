@@ -15,10 +15,10 @@ Page({
     statusBarHeight: 0,
     navHeight: 0,
     pageNum: 1,
-    pageSize: 6,
+    pageSize: 10,
     hasMore: true,
     isRefreshing: false,
-    categories: ['推荐', '穿搭', '美食', '彩妆', '影视', '职场', '情感', '更多'],
+    categories: [],
     contentList: []
   },
   bindViewTap() {
@@ -64,123 +64,145 @@ Page({
   onLoad() {
     // 获取状态栏高度
     const systemInfo = wx.getSystemInfoSync();
-    const statusBarHeight = systemInfo.statusBarHeight;
+    const statusBarHeight = systemInfo.statusBarHeight-3;
     const navHeight = statusBarHeight + 48;
-
-    // 设置CSS变量
-    wx.getSystemInfo({
-      success: (res) => {
-        const style = document.createElement('style');
-        style.innerHTML = `:root { --nav-height: ${navHeight}px; }`;
-        document.head.appendChild(style);
-      }
-    });
 
     this.setData({
       statusBarHeight,
       navHeight
     });
 
-    // 加载初始数据
-    this.loadInitialData();
+    // 加载分类数据
+    this.loadCategories();
   },
-  // 生成模拟数据
-  generateMockData(pageNum) {
-    const baseData = [
-      {
-        title: '株连九族有多恐怖？5000年仅此一人！',
-        author: '伴读马老狮',
-        likes: 3000,
-      },
-      {
-        title: '小院转让｜广州新塘',
-        author: '十方｜中式空间营造',
-        likes: 169,
-      },
-      {
-        title: '刀郎演唱',
-        author: '刀郎新歌',
-        likes: 2800,
-      },
-      {
-        title: '为什么要读书，因为看到这雨打柿树你会说："秋去冬来..."',
-        author: '文学日报',
-        likes: 520,
-      },
-      {
-        title: '这才是真正的中国传统建筑！',
-        author: '建筑日记',
-        likes: 1500,
-      },
-      {
-        title: '年轻人的第一件汉服',
-        author: '汉服文化',
-        likes: 888,
-      }
-    ];
-
-    // 为每个分类生成不同的数据
-    const categoryData = baseData.map((item, index) => ({
-      ...item,
-      title: `${this.data.categories[this.data.currentTab]}-${pageNum}-${item.title}`,
-    }));
-
-    return categoryData.map((item, index) => ({
-      id: pageNum * 6 + index + 1,
-      ...item,
-      images: ['/assets/images/default-cover.png'],
-      avatar: '/assets/images/default-avatar.png',
-      createTime: '2024-02-24'
-    }));
+  // 加载分类数据
+  async loadCategories() {
+    const query = wx.Bmob.Query("category");
+    query.order("sort");
+    try {
+      const categories = await query.find();
+      // 添加"推荐"分类
+      const allCategories = [{
+        objectId: 'all',
+        name: '推荐'
+      }, ...categories];
+      
+      this.setData({
+        categories: allCategories
+      });
+      // 加载初始数据
+      this.loadInitialData();
+    } catch (error) {
+      console.error('加载分类失败:', error);
+      wx.showToast({
+        title: '加载分类失败',
+        icon: 'none'
+      });
+    }
   },
   // 加载初始数据
-  loadInitialData() {
-    const mockData = this.generateMockData(0);
-    this.setData({
-      contentList: mockData,
-      pageNum: 1,
-      hasMore: true
+  async loadInitialData() {
+    const query = this.getNotesQuery();
+    query.limit(this.data.pageSize);
+    query.skip(0);
+    
+    try {
+      const notes = await query.find();
+      this.setData({
+        contentList: this.formatNotes(notes),
+        pageNum: 1,
+        hasMore: notes.length === this.data.pageSize
+      });
+    } catch (error) {
+      console.error('加载数据失败:', error);
+      wx.showToast({
+        title: '加载数据失败',
+        icon: 'none'
+      });
+    }
+  },
+  // 构建笔记查询对象
+  getNotesQuery() {
+    const query = wx.Bmob.Query("note");
+    query.order("-createdAt");
+    query.include("author");
+    
+    // 如果不是"推荐"分类，添加分类过滤
+    if (this.data.currentTab > 0) {
+      const categoryId = this.data.categories[this.data.currentTab].objectId;
+      const pointer = wx.Bmob.Pointer("category");
+      const pointerObject = pointer.set(categoryId);
+      query.equalTo("category", "==", pointerObject);
+    }
+    
+    return query;
+  },
+  // 格式化笔记数据
+  formatNotes(notes) {
+    return notes.map(note => {
+      console.log('完整的笔记数据:', note);
+      console.log('作者信息:', note.author);
+      console.log('作者昵称:', note.author ? note.author.nickname : '无昵称');
+      
+      return {
+        id: note.objectId,
+        title: note.content,
+        author: note.author?.nickname || '匿名用户',
+        likes: note.likeCount || 0,
+        images: note.images || ['/assets/images/default-cover.png'],
+        avatar: note.author?.avatar || '/assets/images/default-avatar.png',
+        createTime: note.createdAt.split(' ')[0]
+      };
     });
   },
   // 加载更多数据
-  loadMore() {
-    console.log("hello");
+  async loadMore() {
     if (!this.data.hasMore) return;
     
     wx.showLoading({
       title: '加载中...'
     });
 
-    // 模拟网络请求延迟
-    setTimeout(() => {
-      const mockData = this.generateMockData(this.data.pageNum);
-      const hasMore = this.data.pageNum < 5; // 增加到5页数据
+    const query = this.getNotesQuery();
+    query.limit(this.data.pageSize);
+    query.skip(this.data.pageNum * this.data.pageSize);
 
+    try {
+      const notes = await query.find();
+      const formattedNotes = this.formatNotes(notes);
+      
       this.setData({
-        contentList: [...this.data.contentList, ...mockData],
+        contentList: [...this.data.contentList, ...formattedNotes],
         pageNum: this.data.pageNum + 1,
-        hasMore
+        hasMore: notes.length === this.data.pageSize
       });
-
+    } catch (error) {
+      console.error('加载更多失败:', error);
+      wx.showToast({
+        title: '加载更多失败',
+        icon: 'none'
+      });
+    } finally {
       wx.hideLoading();
-    }, 500);
+    }
   },
   // 下拉刷新
-  onRefresh() {
+  async onRefresh() {
     if (this.data.isRefreshing) return;
     
     this.setData({
       isRefreshing: true
     });
 
-    setTimeout(() => {
-      this.loadInitialData();
+    try {
+      await this.loadInitialData();
+    } finally {
       this.setData({
-        isRefreshing: false,
-        hasMore: true
+        isRefreshing: false
       });
-    }, 500);
+    }
   },
+  // 切换分类
   switchTab(e) {
     const index = e.currentTarget.dataset.index;
     this.setData({

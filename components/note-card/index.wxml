@@ -8,7 +8,7 @@
     <view class="note-title">{{note.title}}</view>
     <view class="note-author">
       <view class="author-avatar" style="background: {{gradientBg}}"></view>
-      <text class="author-name">{{note.author.nickname}}</text>
+      <text class="author-name">{{note.author.nickname || note.author}}</text>
       <view class="like-count" catchtap="onTapLike">
         <text class="count">{{note.likes}}</text>
       </view>

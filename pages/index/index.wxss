@@ -25,7 +25,7 @@ page {
 
 .scrollarea {
   flex: 1;
-  height: calc(100vh - 80px);
+  height: 100%;
   background: #f4f4f4;
 }
 
@@ -182,8 +182,7 @@ input {
 
 .content-list {
   background: #f4f4f4;
-  min-height: calc(100vh - 120px);
-  padding-bottom: 50px;
+  padding-bottom: calc(50px + env(safe-area-inset-bottom));
 }
 
 .card-container {
@@ -206,4 +205,5 @@ input {
   padding: 10px 0;
   color: #999;
   font-size: 12px;
+  margin-bottom: env(safe-area-inset-bottom);
 }
