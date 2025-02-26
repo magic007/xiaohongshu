@@ -30,6 +30,16 @@
     <view class="tags">
       <text class="tag" wx:for="{{noteData.tags}}" wx:key="index">#{{item}}</text>
     </view>
+
+    <!-- 发布时间 -->
+    <view class="publish-info">
+      <text class="time">{{noteData.createTime}} {{noteData.location ? '·' : ''}} 广东</text>
+    </view>
+
+    <!-- 评论数量提示 -->
+    <view class="comment-count" wx:if="{{noteData.commentCount > 0}}">
+      <text>共 {{noteData.commentCount}}+ 条评论</text>
+    </view>
   </view>
 
   <!-- 底部操作栏 -->

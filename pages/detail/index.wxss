@@ -139,10 +139,26 @@
   margin-bottom: 12rpx;
 }
 
-.publish-time {
+.publish-info {
+  display: flex;
+  align-items: center;
+  margin-top: 24rpx;
   font-size: 24rpx;
   color: #999;
-  margin-top: 16rpx;
+}
+
+.location {
+  margin-right: 8rpx;
+}
+
+.time {
+  color: #999;
+}
+
+.comment-count {
+  margin-top: 24rpx;
+  font-size: 24rpx;
+  color: #666;
 }
 
 /* 评论区域 */

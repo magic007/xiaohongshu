@@ -11,7 +11,6 @@ Page({
       tags: [],
       location: '',
       createTime: '',
-      displayTime: '',
       likeCount: 0,
       starCount: 0,
       commentCount: 0,
@@ -26,33 +25,6 @@ Page({
     currentPage: 1,
     pageSize: 10,
     hasMore: true
-  },
-
-  // 格式化时间显示
-  formatTime(dateString) {
-    const now = new Date()
-    const date = new Date(dateString)
-    const diff = now - date
-
-    // 计算时间差
-    const minutes = Math.floor(diff / (1000 * 60))
-    const hours = Math.floor(diff / (1000 * 60 * 60))
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24))
-
-    if (minutes < 1) {
-      return '刚刚'
-    } else if (minutes < 60) {
-      return `${minutes}分钟前`
-    } else if (hours < 24) {
-      return `${hours}小时前`
-    } else if (days < 30) {
-      return `${days}天前`
-    } else {
-      const year = date.getFullYear()
-      const month = (date.getMonth() + 1).toString().padStart(2, '0')
-      const day = date.getDate().toString().padStart(2, '0')
-      return `${year}-${month}-${day}`
-    }
   },
 
   onLoad: function(options) {
@@ -101,8 +73,7 @@ Page({
           images: note.images || [],
           tags: note.tags || [],
           location: note.location || '',
-          createTime: note.createdAt,
-          displayTime: this.formatTime(note.createdAt),
+          createTime: note.createdAt.split(' ')[0],
           likeCount: note.likeCount || 0,
           starCount: note.favoriteCount || 0,
           commentCount: note.commentCount || 0,
