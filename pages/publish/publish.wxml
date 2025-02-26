@@ -1,0 +1,61 @@
+<!-- 发布页面 -->
+<view class="publish-container">
+  <!-- 顶部导航栏 -->
+  <view class="nav-bar">
+ 
+    <view class="nav-title">发布笔记</view>
+
+  </view>
+
+  <!-- 内容区域 -->
+  <scroll-view scroll-y class="content-area">
+    <!-- 图片上传区域 -->
+    <view class="image-upload">
+      <view class="image-list">
+        <view class="image-item" wx:for="{{images}}" wx:key="index">
+          <image src="{{item}}" mode="aspectFill"></image>
+          <view class="delete-btn" bindtap="deleteImage" data-index="{{index}}">×</view>
+        </view>
+        <view class="upload-btn" bindtap="chooseImage" wx:if="{{images.length < 9}}">
+          <view class="plus">+</view>
+          <view class="text">添加图片</view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 文本输入区域 -->
+    <view class="text-area">
+      <textarea placeholder="分享你的故事..." value="{{content}}" bindinput="onContentInput" maxlength="1000"></textarea>
+      <view class="word-count">{{content.length}}/1000</view>
+    </view>
+
+    <!-- 分类选择 -->
+    <view class="category-section">
+      <view class="section-title">选择分类</view>
+      <view class="category-list">
+        <view class="category-item {{selectedCategory === item.objectId ? 'active' : ''}}" 
+              wx:for="{{categories}}" 
+              wx:key="objectId"
+              bindtap="selectCategory"
+              data-id="{{item.objectId}}">
+          {{item.name}}
+        </view>
+      </view>
+    </view>
+
+    <!-- 位置信息 -->
+    <view class="location-section" bindtap="chooseLocation">
+      <view class="section-title">添加位置</view>
+      <view class="location-info">
+        <text>{{location ? location.name : '点击添加位置'}}</text>
+        <view class="arrow">></view>
+      </view>
+    </view>
+  </scroll-view>
+
+  <!-- 底部按钮区域 -->
+  <view class="bottom-bar">
+    <view class="cancel-btn" bindtap="onCancel">取消</view>
+    <view class="publish-btn {{canPublish ? 'active' : ''}}" bindtap="onPublish">发布</view>
+  </view>
+</view> 

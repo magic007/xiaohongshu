@@ -4,9 +4,9 @@
   <view class="custom-nav" style="padding-top:{{statusBarHeight}}px">
     <view class="search-container">
       <view class="logo">小红书</view>
-      <view class="search-box">
-        <image class="search-icon" src="/assets/images/search.png"></image>
-        <input type="text" placeholder="国家公祭日" placeholder-class="search-placeholder" />
+      <view class="search-box" bindtap="goToSearch">
+        <view class="search-icon"></view>
+        <input type="text" placeholder="国家公祭日" placeholder-class="search-placeholder" disabled />
       </view>
       <image class="more-icon" src="/assets/images/more.png"></image>
     </view>
@@ -46,4 +46,9 @@
       <view class="loading" wx:else>没有更多了</view>
     </view>
   </scroll-view>
+
+  <!-- 浮动发布按钮 -->
+  <view class="publish-btn" bindtap="goToPublish">
+    <view class="plus">+</view>
+  </view>
 </scroll-view>

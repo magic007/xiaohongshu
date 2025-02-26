@@ -1,32 +1,60 @@
 <!--pages/detail/index.wxml-->
-<text>pages/detail/index.wxml</text>
+<view class="detail-container">
+  <!-- 图片轮播 -->
+  <swiper class="image-swiper" indicator-dots="{{true}}" autoplay="{{false}}" circular="{{true}}">
+    <swiper-item wx:for="{{noteData.images}}" wx:key="index">
+      <image src="{{item}}" mode="aspectFill" class="swiper-image"/>
+    </swiper-item>
+  </swiper>
 
-{{message}}
+  <!-- 用户信息区域 -->
+  <view class="user-info">
+    <view class="user-header">
+      <view class="user-left">
+        <view class="{{noteData.userInfo.avatar ? 'avatar' : 'avatar avatar-gradient'}}">
+          <image wx:if="{{noteData.userInfo.avatar}}" src="{{noteData.userInfo.avatar}}" mode="aspectFill"/>
+        </view>
+        <view class="user-meta">
+          <text class="nickname">{{noteData.userInfo.nickname}}</text>
+        </view>
+      </view>
+      <button class="follow-btn" bindtap="handleFollow">{{isFollowing ? '已关注' : '关注'}}</button>
+    </view>
+  </view>
 
-<view>讲师：{{userInfo.name}} - {{userInfo.title}}</view>
+  <!-- 笔记内容 -->
+  <view class="note-content">
+    <text class="content">{{noteData.content}}</text>
+    
+    <!-- 标签 -->
+    <view class="tags">
+      <text class="tag" wx:for="{{noteData.tags}}" wx:key="index">#{{item}}</text>
+    </view>
+  </view>
 
-<view wx:for="{{courseList}}">{{item}}</view>
-
-<!-- 1. 点击事件示例 -->
-<view class="event-section">
-  <button bindtap="handleTap" type="primary">点击我</button>
-  <view>点击次数：{{tapCount}}</view>
+  <!-- 底部操作栏 -->
+  <view class="bottom-bar">
+    <view class="action-section">
+      <view class="action-left">
+        <view class="action-item" bindtap="handleLike">
+          <text class="iconfont icon-like"></text>
+          <text class="action-count">{{noteData.likeCount}}</text>
+        </view>
+        <view class="action-item" bindtap="handleStar">
+          <text class="iconfont icon-star"></text>
+          <text class="action-count">{{noteData.starCount}}</text>
+        </view>
+        <view class="action-item" bindtap="showCommentInput">
+          <text class="iconfont icon-comment"></text>
+          <text class="action-count">{{noteData.commentCount}}</text>
+        </view>
+      </view>
+      <view class="action-right">
+        <button class="share-btn" bindtap="handleShare">
+          <text class="iconfont icon-share"></text>
+          <text>分享</text>
+        </button>
+      </view>
+    </view>
+  </view>
 </view>
-
-<!-- 2. 输入事件示例 -->
-<view class="event-section">
-  <input 
-    bindinput="handleInput" 
-    placeholder="请输入内容" 
-    value="{{inputValue}}"
-    class="input-box"
-  />
-  <view>你输入的内容：{{inputValue}}</view>
-</view>
-
-<!-- 3. 表单提交示例 -->
-<form bindsubmit="handleSubmit" class="event-section">
-  <input name="username" placeholder="用户名" class="input-box"/>
-  <input name="age" type="number" placeholder="年龄" class="input-box"/>
-  <button form-type="submit" type="primary">提交表单</button>
-</form>

@@ -12,8 +12,8 @@ Page({
     canIUseGetUserProfile: wx.canIUse('getUserProfile'),
     canIUseNicknameComp: wx.canIUse('input.type.nickname'),
     currentTab: 0,
-    statusBarHeight: 0,
-    navHeight: 0,
+    statusBarHeight: 20,
+    navHeight: 44,
     pageNum: 1,
     pageSize: 10,
     hasMore: true,
@@ -219,5 +219,25 @@ Page({
   },
   onReachBottom() {
     // 上拉加载更多逻辑
+  },
+  // 跳转到发布页面
+  goToPublish() {
+    const current = wx.Bmob.User.current();
+    if (!current) {
+      wx.showToast({
+        title: '请先登录',
+        icon: 'none'
+      });
+      return;
+    }
+    wx.navigateTo({
+      url: '/pages/publish/publish'
+    });
+  },
+  // 跳转到搜索页面
+  goToSearch() {
+    wx.navigateTo({
+      url: '/pages/search/search'
+    });
   }
 })

@@ -1,0 +1,125 @@
+/* search.wxss */
+page {
+  background: #fff;
+}
+
+.search-page {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+.search-header {
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  background: #fff;
+  border-bottom: 1px solid #f5f5f5;
+}
+
+.search-box {
+  flex: 1;
+  height: 32px;
+  background: #F6F6F6;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  margin-right: 12px;
+}
+
+.search-icon {
+  position: relative;
+  width: 12px;
+  height: 12px;
+  border: 2px solid #999;
+  border-radius: 50%;
+  margin-right: 8px;
+  flex-shrink: 0;
+}
+
+.search-icon::after {
+  content: '';
+  position: absolute;
+  width: 2px;
+  height: 6px;
+  background: #999;
+  bottom: -4px;
+  right: -4px;
+  transform: rotate(-45deg);
+}
+
+.cancel-btn {
+  color: #333;
+  font-size: 14px;
+  padding: 0 4px;
+}
+
+input {
+  flex: 1;
+  font-size: 13px;
+}
+
+.search-placeholder {
+  color: #999;
+  font-size: 13px;
+}
+
+.search-recommend {
+  padding: 16px;
+}
+
+.recommend-title {
+  font-size: 14px;
+  color: #333;
+  margin-bottom: 12px;
+  font-weight: 500;
+}
+
+.recommend-list {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 0 -6px;
+}
+
+.recommend-item {
+  margin: 0 6px 12px;
+  padding: 6px 12px;
+  background: #F6F6F6;
+  border-radius: 16px;
+  font-size: 13px;
+  color: #666;
+}
+
+.search-results {
+  flex: 1;
+  background: #f4f4f4;
+}
+
+.content-list {
+  background: #f4f4f4;
+  padding-bottom: calc(50px + env(safe-area-inset-bottom));
+}
+
+.card-container {
+  padding: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+}
+
+.card-item {
+  width: calc(50% - 4px);
+  margin-bottom: 8px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.loading {
+  text-align: center;
+  padding: 10px 0;
+  color: #999;
+  font-size: 12px;
+  margin-bottom: env(safe-area-inset-bottom);
+} 

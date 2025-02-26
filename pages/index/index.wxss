@@ -121,9 +121,24 @@ page {
 }
 
 .search-icon {
-  width: 16px;
-  height: 16px;
-  margin-right: 6px;
+  position: relative;
+  width: 12px;
+  height: 12px;
+  border: 2px solid #999;
+  border-radius: 50%;
+  margin-right: 8px;
+  flex-shrink: 0;
+}
+
+.search-icon::after {
+  content: '';
+  position: absolute;
+  width: 2px;
+  height: 6px;
+  background: #999;
+  bottom: -4px;
+  right: -4px;
+  transform: rotate(-45deg);
 }
 
 .more-icon {
@@ -206,4 +221,27 @@ input {
   color: #999;
   font-size: 12px;
   margin-bottom: env(safe-area-inset-bottom);
+}
+
+/* 发布按钮样式 */
+.publish-btn {
+  position: fixed;
+  right: 30rpx;
+  bottom: 120rpx;
+  width: 100rpx;
+  height: 100rpx;
+  background: linear-gradient(to right, #fe2c55, #ff4d6d);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4rpx 12rpx rgba(254, 44, 85, 0.4);
+  z-index: 100;
+}
+
+.publish-btn .plus {
+  color: #fff;
+  font-size: 60rpx;
+  font-weight: 300;
+  line-height: 1;
 }

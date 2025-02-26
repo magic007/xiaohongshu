@@ -1,0 +1,56 @@
+<!--search.wxml-->
+<view class="search-page">
+  <!-- 搜索框 -->
+  <view class="search-header">
+    <view class="search-box">
+      <view class="search-icon"></view>
+      <input type="text" 
+        placeholder="搜索" 
+        placeholder-class="search-placeholder"
+        value="{{searchText}}"
+        focus="{{true}}"
+        bindinput="onSearchInput"
+        bindconfirm="onSearch" />
+    </view>
+    <view class="cancel-btn" bindtap="onCancel">取消</view>
+  </view>
+
+  <!-- 搜索推荐 -->
+  <view class="search-recommend" wx:if="{{!searching}}">
+    <view class="recommend-title">猜你想搜</view>
+    <view class="recommend-list">
+      <view class="recommend-item" 
+        wx:for="{{recommendList}}" 
+        wx:key="index"
+        bindtap="onTapRecommend"
+        data-keyword="{{item}}">
+        {{item}}
+      </view>
+    </view>
+  </view>
+
+  <!-- 搜索结果 -->
+  <scroll-view 
+    class="search-results" 
+    scroll-y 
+    wx:if="{{searching}}"
+    bindscrolltolower="loadMore"
+    enable-back-to-top
+    enhanced
+    show-scrollbar="{{false}}">
+    <view class="content-list">
+      <view class="card-container">
+        <view class="card-item" 
+          wx:for="{{searchResults}}" 
+          wx:key="id" 
+          bindtap="goToDetail" 
+          data-id="{{item.id}}">
+          <note-card note="{{item}}"></note-card>
+        </view>
+      </view>
+      <!-- 加载更多 -->
+      <view class="loading" wx:if="{{hasMore}}">正在加载更多...</view>
+      <view class="loading" wx:else>没有更多了</view>
+    </view>
+  </scroll-view>
+</view> 
