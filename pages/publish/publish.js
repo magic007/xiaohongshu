@@ -1,11 +1,13 @@
 Page({
   data: {
     images: [],
+    videos: [],
     content: '',
     categories: [],
     selectedCategory: '',
     location: null,
-    canPublish: false
+    canPublish: false,
+    currentVideoId: null
   },
 
   onLoad() {
@@ -22,49 +24,159 @@ Page({
     });
   },
 
-  // 选择图片
-  chooseImage() {
-    wx.chooseImage({
-      count: 9 - this.data.images.length,
-      sizeType: ['compressed'],
-      sourceType: ['album', 'camera'],
+  // 选择媒体文件
+  chooseMedia() {
+    // 如果已经有视频，不允许再选择任何媒体
+    if (this.data.videos.length > 0) {
+      wx.showToast({
+        title: '请先删除视频',
+        icon: 'none'
+      });
+      return;
+    }
+
+    // 如果已经有图片，只允许继续选择图片
+    if (this.data.images.length > 0) {
+      wx.chooseMedia({
+        count: 9 - this.data.images.length,
+        mediaType: ['image'],
+        sourceType: ['album', 'camera'],
+        success: (res) => {
+          const tempFiles = res.tempFiles;
+          this.uploadMediaFiles(tempFiles);
+        }
+      });
+      return;
+    }
+
+    // 如果都没有，允许选择图片或视频
+    wx.showActionSheet({
+      itemList: ['选择图片', '选择视频'],
       success: (res) => {
-        const tempFilePaths = res.tempFilePaths;
-        this.uploadImages(tempFilePaths);
+        if (res.tapIndex === 0) {
+          // 选择图片
+          wx.chooseMedia({
+            count: 9,
+            mediaType: ['image'],
+            sourceType: ['album', 'camera'],
+            success: (res) => {
+              const tempFiles = res.tempFiles;
+              this.uploadMediaFiles(tempFiles);
+            }
+          });
+        } else {
+          // 选择视频
+          wx.chooseMedia({
+            count: 1,
+            mediaType: ['video'],
+            sourceType: ['album', 'camera'],
+            maxDuration: 30,
+            camera: 'back',
+            success: (res) => {
+              const tempFiles = res.tempFiles;
+              // 清空已有的图片
+              this.setData({ 
+                images: [],
+                videos: []
+              });
+              this.uploadMediaFiles(tempFiles);
+            }
+          });
+        }
       }
     });
   },
 
-  // 上传图片到Bmob
-  uploadImages(tempFilePaths) {
+  // 播放视频
+  playVideo(e) {
+    const videoId = e.currentTarget.dataset.id;
+    // 如果有正在播放的视频，先停止它
+    if (this.data.currentVideoId && this.data.currentVideoId !== videoId) {
+      const oldVideo = wx.createVideoContext(this.data.currentVideoId);
+      oldVideo.stop();
+    }
+    const videoContext = wx.createVideoContext(videoId);
+    if (this.data.currentVideoId === videoId) {
+      // 如果点击的是当前正在播放的视频，暂停它
+      videoContext.pause();
+      this.setData({ currentVideoId: null });
+    } else {
+      // 播放新的视频
+      videoContext.play();
+      this.setData({ currentVideoId: videoId });
+    }
+  },
+
+  // 页面隐藏时停止视频播放
+  onHide() {
+    if (this.data.currentVideoId) {
+      const videoContext = wx.createVideoContext(this.data.currentVideoId);
+      videoContext.stop();
+      this.setData({ currentVideoId: null });
+    }
+  },
+
+  // 上传媒体文件到Bmob
+  uploadMediaFiles(tempFiles) {
     wx.showLoading({
       title: '上传中...'
     });
 
-    const uploadPromises = tempFilePaths.map(item => {
+    const uploadPromises = tempFiles.map(file => {
       return new Promise((resolve, reject) => {
-        const file = wx.Bmob.File('note.jpg', item);
-        file.save().then(res => {
+        const isVideo = file.fileType === 'video';
+        const fileName = isVideo ? `note_video_${Date.now()}.mp4` : `note_image_${Date.now()}.jpg`;
+        const bmobFile = wx.Bmob.File(fileName, file.tempFilePath);
+        
+        bmobFile.save().then(res => {
           console.log('上传结果：', res);
           try {
-            // 解析返回结果
             let result = res;
             if (typeof res === 'string') {
               result = JSON.parse(res);
             }
-            // 处理数组格式的返回值
             if (Array.isArray(result)) {
-              result = result[0]; // 获取数组中的第一个对象
+              result = result[0];
             }
-            // 确保返回完整的图片URL
-            const imageUrl = result.url;
-            if (!imageUrl) {
-              throw new Error('图片URL不存在');
+            let fileUrl = result.url;
+            if (!fileUrl) {
+              throw new Error('文件URL不存在');
             }
-            console.log('解析后的图片URL：', imageUrl);
-            resolve(imageUrl);
+
+            // 处理视频URL
+            if (isVideo) {
+              // 确保URL使用HTTPS
+              fileUrl = fileUrl.replace('http://', 'https://');
+              
+              // 验证视频URL是否可访问
+              wx.request({
+                url: fileUrl,
+                method: 'HEAD',
+                success: () => {
+                  resolve({
+                    url: fileUrl,
+                    type: 'video',
+                    duration: file.duration,
+                    thumbUrl: file.thumbTempFilePath,
+                    size: file.size,
+                    width: file.width,
+                    height: file.height
+                  });
+                },
+                fail: (error) => {
+                  console.error('视频URL验证失败：', error);
+                  reject(new Error('视频文件无法访问'));
+                }
+              });
+            } else {
+              // 图片文件直接返回
+              resolve({
+                url: fileUrl,
+                type: 'image'
+              });
+            }
           } catch (error) {
-            console.error('解析图片URL失败：', error);
+            console.error('解析文件URL失败：', error);
             reject(error);
           }
         }).catch(err => {
@@ -74,35 +186,62 @@ Page({
       });
     });
 
-    Promise.all(uploadPromises).then(urls => {
-      console.log('所有图片上传完成，URLs：', urls);
-      // 过滤掉无效的URL
-      const validUrls = urls.filter(url => url && typeof url === 'string');
-      if (validUrls.length > 0) {
+    Promise.all(uploadPromises).then(results => {
+      console.log('所有文件上传完成：', results);
+      const validResults = results.filter(result => result && result.url);
+      
+      if (validResults.length > 0) {
+        const newImages = [];
+        const newVideos = [];
+        
+        validResults.forEach(result => {
+          if (result.type === 'video') {
+            // 转换视频信息
+            const videoInfo = {
+              url: result.url,
+              duration: result.duration || 0,
+              thumbUrl: result.thumbUrl || '',
+              size: result.size || 0,
+              width: result.width || 0,
+              height: result.height || 0
+            };
+            newVideos.push(videoInfo);
+            console.log('添加视频：', videoInfo);
+          } else {
+            newImages.push(result.url);
+          }
+        });
+
         this.setData({
-          images: [...this.data.images, ...validUrls]
+          images: [...this.data.images, ...newImages],
+          videos: [...this.data.videos, ...newVideos]
+        }, () => {
+          // 在设置完数据后打印当前状态
+          console.log('当前视频列表：', this.data.videos);
         });
         this.checkCanPublish();
-      } else {
-        throw new Error('没有有效的图片URL');
       }
       wx.hideLoading();
     }).catch(err => {
-      console.error('图片上传或处理失败：', err);
+      console.error('文件上传或处理失败：', err);
       wx.hideLoading();
       wx.showToast({
-        title: '图片处理失败',
+        title: err.message || '上传失败',
         icon: 'none'
       });
     });
   },
 
-  // 删除图片
-  deleteImage(e) {
-    const index = e.currentTarget.dataset.index;
-    const images = this.data.images;
-    images.splice(index, 1);
-    this.setData({ images });
+  // 删除媒体文件
+  deleteMedia(e) {
+    const { index, type } = e.currentTarget.dataset;
+    if (type === 'video') {
+      this.setData({ videos: [] });
+    } else {
+      const images = this.data.images;
+      images.splice(index, 1);
+      this.setData({ images });
+    }
     this.checkCanPublish();
   },
 
@@ -204,8 +343,9 @@ Page({
 
   // 检查是否可以发布
   checkCanPublish() {
-    const { images, content, selectedCategory } = this.data;
-    const canPublish = images.length > 0 && content.trim() && selectedCategory;
+    const { images, videos, content, selectedCategory } = this.data;
+    const hasMedia = images.length > 0 || videos.length > 0;
+    const canPublish = hasMedia && content.trim() && selectedCategory;
     this.setData({ canPublish });
   },
 
@@ -218,7 +358,7 @@ Page({
   onPublish() {
     if (!this.data.canPublish) return;
 
-    const { images, content, selectedCategory, location } = this.data;
+    const { images, videos, content, selectedCategory, location } = this.data;
     const current = wx.Bmob.User.current();
     
     if (!current) {
@@ -232,6 +372,16 @@ Page({
     const Note = wx.Bmob.Query('note');
     Note.set('content', content);
     Note.set('images', images);
+    
+    // 设置视频信息
+    if (videos.length > 0) {
+      const videoInfo = videos[0]; // 只取第一个视频
+      Note.set('video', videoInfo.url); // 设置单个视频URL
+      Note.set('videos', [videoInfo]); // 保存完整视频信息到数组
+    } else {
+      Note.set('video', '');
+      Note.set('videos', []);
+    }
     
     // 设置分类
     const pointer = wx.Bmob.Pointer('category');
@@ -265,13 +415,34 @@ Page({
         icon: 'success'
       });
       setTimeout(() => {
-        wx.navigateBack();
+        // 跳转到首页（tabBar页面）
+        wx.switchTab({
+          url: '/pages/index/index',
+          success: () => {
+            // 发布成功后，可以刷新首页数据
+            const pages = getCurrentPages();
+            const indexPage = pages.find(page => page.route === 'pages/index/index');
+            if (indexPage && indexPage.onPullDownRefresh) {
+              indexPage.onPullDownRefresh();
+            }
+          }
+        });
       }, 1500);
     }).catch(err => {
+      console.error('发布失败：', err);
       wx.showToast({
         title: '发布失败',
         icon: 'none'
       });
+    });
+  },
+
+  // 视频播放错误处理
+  onVideoError(e) {
+    console.error('视频播放错误：', e.detail);
+    wx.showToast({
+      title: '视频播放失败',
+      icon: 'none'
     });
   }
 }); 

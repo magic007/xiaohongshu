@@ -1,6 +1,6 @@
 <view class="note-card" bindtap="onTapCard">
   <view class="note-image" style="background: {{gradientBg}}">
-    <view class="video-icon" wx:if="{{type === 'video'}}">
+    <view class="video-icon" wx:if="{{note.video}}">
       <view class="icon-inner"></view>
     </view>
   </view>

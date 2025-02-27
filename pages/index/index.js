@@ -55,12 +55,6 @@ Page({
       }
     })
   },
-  goToDetail(e) {
-    const id = e.currentTarget.dataset.id;
-    wx.navigateTo({
-      url: `/pages/detail/index?id=${id}`
-    });
-  },
   onLoad() {
     // 获取状态栏高度
     const systemInfo = wx.getSystemInfoSync();
@@ -147,10 +141,15 @@ Page({
       return {
         id: note.objectId,
         title: note.content,
-        author: note.author?.nickname || '匿名用户',
+        content: note.content,
+        video: note.video || '', // 视频地址
+        author: {
+          nickname: note.author?.nickname || '匿名用户',
+          avatar: note.author?.avatar || '/assets/images/default-avatar.png'
+        },
         likes: note.likeCount || 0,
+        commentCount: note.commentCount || 0,
         images: note.images || ['/assets/images/default-cover.png'],
-        avatar: note.author?.avatar || '/assets/images/default-avatar.png',
         createTime: note.createdAt.split(' ')[0]
       };
     });

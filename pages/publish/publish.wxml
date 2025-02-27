@@ -2,23 +2,50 @@
 <view class="publish-container">
   <!-- 顶部导航栏 -->
   <view class="nav-bar">
- 
     <view class="nav-title">发布笔记</view>
-
   </view>
 
   <!-- 内容区域 -->
   <scroll-view scroll-y class="content-area">
-    <!-- 图片上传区域 -->
-    <view class="image-upload">
-      <view class="image-list">
-        <view class="image-item" wx:for="{{images}}" wx:key="index">
+    <!-- 媒体上传区域 -->
+    <view class="media-upload">
+      <view class="media-list">
+        <!-- 图片列表 -->
+        <view class="media-item" wx:for="{{images}}" wx:key="index">
           <image src="{{item}}" mode="aspectFill"></image>
-          <view class="delete-btn" bindtap="deleteImage" data-index="{{index}}">×</view>
+          <view class="delete-btn" bindtap="deleteMedia" data-index="{{index}}" data-type="image">×</view>
         </view>
-        <view class="upload-btn" bindtap="chooseImage" wx:if="{{images.length < 9}}">
+        <!-- 视频列表 -->
+        <view class="media-item" wx:for="{{videos}}" wx:key="index">
+          <video 
+            id="video-{{index}}"
+            src="{{item.url}}" 
+            class="video-preview"
+            poster="{{item.thumbUrl}}"
+            show-center-play-btn="{{true}}"
+            controls="{{true}}"
+            show-fullscreen-btn="{{false}}"
+            enable-progress-gesture="{{false}}"
+            object-fit="cover"
+            bindtap="playVideo"
+            data-id="video-{{index}}"
+            binderror="onVideoError"
+            initial-time="0"
+            custom-cache="{{false}}"
+            play-btn-position="center"
+            enable-play-gesture="{{true}}"
+            show-mute-btn="{{true}}"
+            muted="{{false}}"
+            vslide-gesture="{{false}}"
+            vslide-gesture-in-fullscreen="{{false}}">
+          </video>
+          <view class="video-duration">{{Math.floor(item.duration)}}s</view>
+          <view class="delete-btn" bindtap="deleteMedia" data-index="{{index}}" data-type="video">×</view>
+        </view>
+        <!-- 上传按钮 -->
+        <view class="upload-btn" bindtap="chooseMedia" wx:if="{{images.length + videos.length < 9}}">
           <view class="plus">+</view>
-          <view class="text">添加图片</view>
+          <view class="text">添加图片/视频</view>
         </view>
       </view>
     </view>

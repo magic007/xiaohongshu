@@ -4,6 +4,7 @@
     "pages/publish/publish",
     "pages/profile/index",
     "pages/settings/index",
+    "pages/video-detail/index",
     "pages/login/login",
     "pages/custom-card/index",
     "pages/detail/index",

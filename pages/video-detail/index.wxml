@@ -1,0 +1,64 @@
+<view class="video-detail">
+  <!-- 视频播放区域 -->
+  <video 
+    id="myVideo"
+    class="main-video" 
+    src="{{note.video}}"
+    object-fit="contain"
+    autoplay="{{true}}"
+    show-center-play-btn="{{true}}"
+    controls="{{true}}"
+    loop="{{true}}"
+    enable-progress-gesture="{{true}}"
+    initial-time="0"
+    bindplay="onVideoPlay"
+    bindpause="onVideoPause"
+    binderror="onVideoError"
+  ></video>
+
+  <!-- 返回按钮和主页按钮 -->
+  <view class="nav-buttons" style="top: {{statusBarHeight}}px">
+    <view class="nav-btn back" bindtap="goBack">
+      <view class="icon-back"></view>
+    </view>
+    <view class="nav-btn home" bindtap="goHome">
+      <view class="icon-home"></view>
+    </view>
+  </view>
+
+  <!-- 内容区域 -->
+  <view class="content-container">
+    <!-- 作者信息 -->
+    <view class="author-info">
+      <view class="author-avatar" style="background: {{gradientBg}}"></view>
+      <view class="author-name">{{note.author.nickname || note.author}}</view>
+      <view class="follow-btn" bindtap="followAuthor">关注</view>
+    </view>
+
+    <!-- 笔记内容 -->
+    <view class="note-content">
+      <view class="note-title">{{note.title}}</view>
+      <view class="note-text">{{note.content}}</view>
+    </view>
+
+    <!-- 互动按钮组 -->
+    <view class="interaction-buttons">
+      <view class="interaction-btn" bindtap="handleLike">
+        <view class="icon-like {{isLiked ? 'active' : ''}}"></view>
+        <text>{{note.likes || 0}}</text>
+      </view>
+      <view class="interaction-btn" bindtap="handleComment">
+        <view class="icon-comment"></view>
+        <text>{{note.commentCount || 0}}</text>
+      </view>
+      <view class="interaction-btn" bindtap="handleCollect">
+        <view class="icon-collect {{isCollected ? 'active' : ''}}"></view>
+        <text>收藏</text>
+      </view>
+      <view class="interaction-btn" bindtap="handleShare">
+        <view class="icon-share"></view>
+        <text>分享</text>
+      </view>
+    </view>
+  </view>
+</view> 

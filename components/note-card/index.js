@@ -16,12 +16,19 @@ Component({
 
   methods: {
     onTapCard() {
-      const { note, type } = this.properties;
-      this.triggerEvent('tap', { note, type });
+      const { note } = this.properties;
+      // 根据笔记类型跳转到不同页面
+      const url = note.video 
+        ? `/pages/video-detail/index?id=${note.id}`
+        : `/pages/detail/index?id=${note.id}`;
+        
+      wx.navigateTo({ url });
     },
 
-    onTapLike() {
+    onTapLike(e) {
       const { note } = this.properties;
+      // 阻止事件冒泡
+      e.stopPropagation();
       this.triggerEvent('like', { note });
     }
   }

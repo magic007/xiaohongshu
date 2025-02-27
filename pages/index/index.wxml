@@ -36,7 +36,7 @@
     <!-- 内容列表 -->
     <view class="content-list">
       <view class="card-container">
-        <view class="card-item" wx:for="{{contentList}}" wx:key="id" bindtap="goToDetail" data-id="{{item.id}}">
+        <view class="card-item" wx:for="{{contentList}}" wx:key="id">
           <note-card note="{{item}}"></note-card>
         </view>
       </view>

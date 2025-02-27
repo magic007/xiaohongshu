@@ -18,21 +18,23 @@
   position: absolute;
   top: 16rpx;
   right: 16rpx;
-  width: 48rpx;
-  height: 48rpx;
-  background: rgba(0, 0, 0, 0.3);
+  width: 56rpx;
+  height: 56rpx;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(4px);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
+  z-index: 2;
 }
 
 .icon-inner {
   width: 0;
   height: 0;
-  border-left: 16rpx solid #fff;
-  border-top: 10rpx solid transparent;
-  border-bottom: 10rpx solid transparent;
+  border-left: 20rpx solid #fff;
+  border-top: 12rpx solid transparent;
+  border-bottom: 12rpx solid transparent;
   margin-left: 4rpx;
 }
 

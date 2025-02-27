@@ -1,28 +1,18 @@
 .publish-container {
   height: 100vh;
-  background: #fff;
   display: flex;
   flex-direction: column;
+  background: #f8f8f8;
 }
 
 /* 导航栏样式 */
 .nav-bar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0 30rpx;
   height: 88rpx;
   background: #fff;
-  border-bottom: 1rpx solid #f0f0f0;
-}
-
-.nav-left, .nav-right {
-  font-size: 28rpx;
-  color: #333;
-}
-
-.nav-right.active {
-  color: #fe2c55;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-bottom: 1rpx solid #eee;
 }
 
 .nav-title {
@@ -34,41 +24,60 @@
 .content-area {
   flex: 1;
   overflow: hidden;
-  padding-bottom: calc(100rpx + env(safe-area-inset-bottom));
 }
 
-/* 图片上传区域样式 */
-.image-upload {
-  padding: 30rpx;
+/* 媒体上传区域样式 */
+.media-upload {
+  padding: 20rpx;
+  background: #fff;
 }
 
-.image-list {
+.media-list {
   display: flex;
   flex-wrap: wrap;
   gap: 20rpx;
 }
 
-.image-item {
-  width: 216rpx;
-  height: 216rpx;
+.media-item {
   position: relative;
+  width: 220rpx;
+  height: 220rpx;
+  background: #f5f5f5;
+  border-radius: 8rpx;
+  overflow: hidden;
 }
 
-.image-item image {
+.media-item image {
   width: 100%;
   height: 100%;
-  border-radius: 8rpx;
+  object-fit: cover;
+}
+
+.video-preview {
+  width: 100%;
+  height: 100%;
+}
+
+.video-duration {
+  position: absolute;
+  right: 10rpx;
+  bottom: 10rpx;
+  padding: 4rpx 8rpx;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  font-size: 20rpx;
+  border-radius: 4rpx;
 }
 
 .delete-btn {
   position: absolute;
-  right: -10rpx;
-  top: -10rpx;
+  right: 10rpx;
+  top: 10rpx;
   width: 40rpx;
   height: 40rpx;
-  background: rgba(0, 0, 0, 0.5);
-  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.6);
   color: #fff;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -76,9 +85,10 @@
 }
 
 .upload-btn {
-  width: 216rpx;
-  height: 216rpx;
-  background: #f7f7f7;
+  width: 220rpx;
+  height: 220rpx;
+  background: #fff;
+  border: 2rpx dashed #ddd;
   border-radius: 8rpx;
   display: flex;
   flex-direction: column;
@@ -86,42 +96,41 @@
   justify-content: center;
 }
 
-.plus {
+.upload-btn .plus {
   font-size: 48rpx;
   color: #999;
   margin-bottom: 10rpx;
 }
 
-.text {
+.upload-btn .text {
   font-size: 24rpx;
   color: #999;
 }
 
 /* 文本输入区域样式 */
 .text-area {
-  padding: 30rpx;
-  position: relative;
+  margin-top: 20rpx;
+  padding: 20rpx;
+  background: #fff;
 }
 
 textarea {
   width: 100%;
   height: 200rpx;
-  font-size: 28rpx;
-  line-height: 1.5;
 }
 
 .word-count {
-  position: absolute;
-  right: 30rpx;
-  bottom: 30rpx;
+  text-align: right;
   font-size: 24rpx;
   color: #999;
+  margin-top: 10rpx;
 }
 
 /* 分类选择样式 */
 .category-section {
-  padding: 30rpx;
-  border-top: 20rpx solid #f7f7f7;
+  margin-top: 20rpx;
+  padding: 20rpx;
+  background: #fff;
 }
 
 .section-title {
@@ -138,21 +147,22 @@ textarea {
 
 .category-item {
   padding: 10rpx 20rpx;
-  background: #f7f7f7;
+  background: #f5f5f5;
   border-radius: 30rpx;
   font-size: 24rpx;
   color: #666;
 }
 
 .category-item.active {
-  background: #ffe8ec;
-  color: #fe2c55;
+  background: #ff4444;
+  color: #fff;
 }
 
 /* 位置信息样式 */
 .location-section {
-  padding: 30rpx;
-  border-top: 20rpx solid #f7f7f7;
+  margin-top: 20rpx;
+  padding: 20rpx;
+  background: #fff;
 }
 
 .location-info {
@@ -161,7 +171,6 @@ textarea {
   align-items: center;
   font-size: 28rpx;
   color: #666;
-  margin-top: 20rpx;
 }
 
 .arrow {
@@ -170,41 +179,32 @@ textarea {
 
 /* 底部按钮区域样式 */
 .bottom-bar {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
   height: 100rpx;
   background: #fff;
   display: flex;
   align-items: center;
   padding: 0 30rpx;
-  box-shadow: 0 -2rpx 10rpx rgba(0, 0, 0, 0.05);
-  padding-bottom: env(safe-area-inset-bottom);
+  border-top: 1rpx solid #eee;
 }
 
 .cancel-btn {
-  width: 10%;
-  height: 80rpx;
-  line-height: 80rpx;
-  text-align: center;
-  font-size: 28rpx;
+  font-size: 32rpx;
   color: #666;
 }
 
 .publish-btn {
-  width: 90%;
+  flex: 1;
   height: 80rpx;
-  line-height: 80rpx;
-  text-align: center;
-  font-size: 32rpx;
-  color: #999;
-  background: #f5f5f5;
+  margin-left: 30rpx;
+  background: #ddd;
+  color: #fff;
   border-radius: 40rpx;
-  margin-left: 20rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32rpx;
 }
 
 .publish-btn.active {
-  background: linear-gradient(to right, #fe2c55, #ff4d6d);
-  color: #fff;
+  background: #ff4444;
 } 
