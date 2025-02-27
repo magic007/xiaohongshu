@@ -34,7 +34,6 @@
     ]
   },
   "usingComponents": {
-    "note-card": "/components/note-card/index"
   },
   "style": "v2",
   "componentFramework": "glass-easel",

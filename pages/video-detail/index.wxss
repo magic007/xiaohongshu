@@ -29,7 +29,7 @@
 .nav-btn {
   width: 72rpx;
   height: 72rpx;
-  background: rgba(0, 0, 0, 0.4);
+  background: rgba(0, 0, 0, 0.3);
   backdrop-filter: blur(4px);
   border-radius: 50%;
   display: flex;
@@ -63,7 +63,6 @@
   z-index: 2;
   padding: 0;
   color: #fff;
-  background: rgba(0, 0, 0, 0.3);
 }
 
 .author-info {
@@ -85,7 +84,6 @@
   font-weight: 600;
   flex: 1;
   color: #fff;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
 }
 
 .follow-btn {
@@ -98,7 +96,7 @@
 }
 
 .follow-btn.following {
-  background: rgba(255, 255, 255, 0.2);
+  background: #333;
   color: #fff;
   font-weight: 600;
 }
@@ -126,8 +124,7 @@
   -webkit-line-clamp: 2;
   margin: 0;
   transition: all 0.3s ease;
-  font-weight: 500;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  font-weight: 600;
 }
 
 .note-text.expanded {
@@ -148,21 +145,18 @@
 .note-time {
   font-size: 24rpx;
   color: #fff;
-  opacity: 1;
-  font-weight: 500;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  font-weight: 600;
 }
 
 .note-time.show {
-  opacity: 1;
+  display: block;
 }
 
 .note-tags {
   color: #fff;
   font-size: 28rpx;
   display: block;
-  font-weight: 500;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  font-weight: 600;
 }
 
 .tag-item {
@@ -175,8 +169,7 @@
   padding: 4rpx 0;
   position: relative;
   z-index: 2;
-  font-weight: 500;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  font-weight: 600;
 }
 
 .expand-btn.expanded {
@@ -195,13 +188,13 @@
   right: 0;
   bottom: 100%;
   height: 120rpx;
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.9), transparent);
+  background: linear-gradient(to top, #000, transparent);
   pointer-events: none;
   transition: opacity 0.3s ease;
 }
 
 .expand-mask.hide {
-  opacity: 0;
+  display: none;
 }
 
 .progress-bar {
@@ -249,6 +242,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  gap: 8rpx;
 }
 
 .icon-like, .icon-comment, .icon-collect, .icon-share {
@@ -264,7 +258,9 @@
 }
 
 .interaction-btn text {
-  display: none;
+  font-size: 24rpx;
+  color: #fff;
+  font-weight: 600;
 }
 
 .icon-like {
@@ -289,4 +285,14 @@
 .icon-share {
   mask: url("data:image/svg+xml,%3Csvg t='1708747171342' class='icon' viewBox='0 0 1024 1024' version='1.1' xmlns='http://www.w3.org/2000/svg' p-id='4286'%3E%3Cpath d='M768 686.08c-32.768 0-62.464 12.288-85.504 32.256L375.808 573.44c2.048-10.752 3.072-21.504 3.072-32.768 0-11.264-1.024-22.016-3.072-32.768l306.688-144.896c23.04 19.968 52.736 32.256 85.504 32.256 72.192 0 131.072-58.88 131.072-131.072S840.192 133.12 768 133.12s-131.072 58.88-131.072 131.072c0 11.264 1.024 22.016 3.072 32.768L333.312 441.856C310.272 421.888 280.576 409.6 247.808 409.6c-72.192 0-131.072 58.88-131.072 131.072s58.88 131.072 131.072 131.072c32.768 0 62.464-12.288 85.504-32.256l306.688 144.896c-2.048 10.752-3.072 21.504-3.072 32.768 0 72.192 58.88 131.072 131.072 131.072s131.072-58.88 131.072-131.072S840.192 686.08 768 686.08z' p-id='4287'%3E%3C/path%3E%3C/svg%3E") no-repeat;
   -webkit-mask: url("data:image/svg+xml,%3Csvg t='1708747171342' class='icon' viewBox='0 0 1024 1024' version='1.1' xmlns='http://www.w3.org/2000/svg' p-id='4286'%3E%3Cpath d='M768 686.08c-32.768 0-62.464 12.288-85.504 32.256L375.808 573.44c2.048-10.752 3.072-21.504 3.072-32.768 0-11.264-1.024-22.016-3.072-32.768l306.688-144.896c23.04 19.968 52.736 32.256 85.504 32.256 72.192 0 131.072-58.88 131.072-131.072S840.192 133.12 768 133.12s-131.072 58.88-131.072 131.072c0 11.264 1.024 22.016 3.072 32.768L333.312 441.856C310.272 421.888 280.576 409.6 247.808 409.6c-72.192 0-131.072 58.88-131.072 131.072s58.88 131.072 131.072 131.072c32.768 0 62.464-12.288 85.504-32.256l306.688 144.896c-2.048 10.752-3.072 21.504-3.072 32.768 0 72.192 58.88 131.072 131.072 131.072s131.072-58.88 131.072-131.072S840.192 686.08 768 686.08z' p-id='4287'%3E%3C/path%3E%3C/svg%3E") no-repeat;
+}
+
+/* 增加所有文字的字重 */
+.author-name,
+.note-text,
+.note-tags,
+.expand-btn,
+.interaction-btn text {
+  font-weight: 600;
+  color: #fff;
 } 

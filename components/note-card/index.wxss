@@ -40,7 +40,6 @@
 
 .note-content {
   padding: 16rpx;
-  background: #fff;
 }
 
 .note-title {
