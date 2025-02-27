@@ -53,7 +53,14 @@
     <view class="note-content">
       <view class="note-text {{isExpanded ? 'expanded' : ''}}">
         {{note.content}}
-        <view class="expand-btn" wx:if="{{note.content.length > 50}}" bindtap="toggleExpand">
+        
+        <text class="note-tags" wx:if="{{note.tags && note.tags.length}}">
+          <text wx:for="{{note.tags}}" wx:key="*this" class="tag-item">#{{item}} </text>
+        </text>
+      </view>
+      <view class="note-info">
+        <text class="note-time {{isExpanded ? 'show' : ''}}">{{note.createTime}}</text>
+        <view class="expand-btn {{isExpanded ? 'expanded' : ''}}" wx:if="{{note.content.length > 50}}" bindtap="toggleExpand">
           {{isExpanded ? '收起' : '展开全文'}}
         </view>
       </view>
