@@ -4,17 +4,29 @@
     id="myVideo"
     class="main-video" 
     src="{{note.video}}"
-    object-fit="contain"
+    object-fit="cover"
     autoplay="{{true}}"
     show-center-play-btn="{{true}}"
-    controls="{{true}}"
+    controls="{{false}}"
     loop="{{true}}"
     enable-progress-gesture="{{true}}"
     initial-time="0"
     bindplay="onVideoPlay"
     bindpause="onVideoPause"
     binderror="onVideoError"
+    bindtimeupdate="onTimeUpdate"
+    show-fullscreen-btn="{{false}}"
+    custom-cache="{{false}}"
+    bindtap="togglePlay"
   ></video>
+
+  <!-- 进度条 -->
+  <view class="progress-bar" 
+    bindtouchstart="onProgressTouchStart"
+    bindtouchmove="onProgressTouchMove"
+    bindtouchend="onProgressTouchEnd">
+    <view class="progress-inner" style="width: {{progress}}%"></view>
+  </view>
 
   <!-- 返回按钮和主页按钮 -->
   <view class="nav-buttons" style="top: {{statusBarHeight}}px">
@@ -32,13 +44,19 @@
     <view class="author-info">
       <view class="author-avatar" style="background: {{gradientBg}}"></view>
       <view class="author-name">{{note.author.nickname || note.author}}</view>
-      <view class="follow-btn" bindtap="followAuthor">关注</view>
+      <view class="follow-btn {{isFollowing ? 'following' : ''}}" bindtap="followAuthor">
+        {{isFollowing ? '已关注' : '关注'}}
+      </view>
     </view>
 
     <!-- 笔记内容 -->
     <view class="note-content">
-      <view class="note-title">{{note.title}}</view>
-      <view class="note-text">{{note.content}}</view>
+      <view class="note-text {{isExpanded ? 'expanded' : ''}}">
+        {{note.content}}
+        <view class="expand-btn" wx:if="{{note.content.length > 50}}" bindtap="toggleExpand">
+          {{isExpanded ? '收起' : '展开全文'}}
+        </view>
+      </view>
     </view>
 
     <!-- 互动按钮组 -->

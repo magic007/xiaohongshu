@@ -3,8 +3,14 @@ Page({
     note: null,
     isLiked: false,
     isCollected: false,
-    statusBarHeight: 20,
-    gradientBg: 'linear-gradient(120deg, #e0c3fc 0%, #8ec5fc 100%)'
+    isFollowing: false,
+    isExpanded: false,
+    statusBarHeight: 0,
+    gradientBg: 'linear-gradient(120deg, #e0c3fc 0%, #8ec5fc 100%)',
+    progress: 0,
+    videoDuration: 0,
+    isDragging: false,
+    isPlaying: true
   },
 
   onLoad(options) {
@@ -17,6 +23,8 @@ Page({
     if (options.id) {
       this.loadNoteData(options.id);
     }
+
+    this.checkFollowStatus();
   },
 
   onReady() {
@@ -37,14 +45,32 @@ Page({
     }
   },
 
+  // 切换视频播放状态
+  togglePlay() {
+    if (this.data.isPlaying) {
+      this.videoContext.pause();
+    } else {
+      this.videoContext.play();
+    }
+    this.setData({
+      isPlaying: !this.data.isPlaying
+    });
+  },
+
   // 视频播放事件
   onVideoPlay() {
     console.log('视频开始播放');
+    this.setData({
+      isPlaying: true
+    });
   },
 
   // 视频暂停事件
   onVideoPause() {
     console.log('视频暂停播放');
+    this.setData({
+      isPlaying: false
+    });
   },
 
   // 视频错误事件
@@ -67,10 +93,10 @@ Page({
       // 格式化笔记数据
       const formattedNote = {
         id: note.objectId,
-        title: note.content,
         content: note.content,
         video: note.video,
         author: {
+          id: note.author?.objectId,
           nickname: note.author?.nickname || '匿名用户',
           avatar: note.author?.avatar || '/assets/images/default-avatar.png'
         },
@@ -85,9 +111,12 @@ Page({
         }
       });
 
-      // 检查是否已点赞和收藏
+      // 检查是否已点赞、收藏和关注
       this.checkLikeStatus(noteId);
       this.checkCollectStatus(noteId);
+      if (note.author?.objectId) {
+        this.checkFollowStatus();
+      }
     } catch (error) {
       console.error('加载笔记失败:', error);
       wx.showToast({
@@ -132,6 +161,24 @@ Page({
       });
     } catch (error) {
       console.error('检查收藏状态失败:', error);
+    }
+  },
+
+  // 检查关注状态
+  async checkFollowStatus() {
+    try {
+      const current = wx.Bmob.User.current();
+      if (!current || !this.data.note?.author?.objectId) return;
+
+      const query = wx.Bmob.Query("Follow");
+      query.equalTo("userId", "==", current.objectId);
+      query.equalTo("followedId", "==", this.data.note.author.objectId);
+      const result = await query.find();
+      this.setData({
+        isFollowing: result.length > 0
+      });
+    } catch (error) {
+      console.error('检查关注状态失败:', error);
     }
   },
 
@@ -244,10 +291,9 @@ Page({
     });
   },
 
-  // 关注作者
+  // 关注/取消关注作者
   async followAuthor() {
-    const current = wx.Bmob.User.current();
-    if (!current) {
+    if (!wx.Bmob.User.current()) {
       wx.showToast({
         title: '请先登录',
         icon: 'none'
@@ -255,10 +301,55 @@ Page({
       return;
     }
 
-    // TODO: 实现关注功能
-    wx.showToast({
-      title: '关注功能开发中',
-      icon: 'none'
+    try {
+      if (this.data.isFollowing) {
+        // 取消关注
+        const query = new wx.Bmob.Query('follow')
+        const pointer = wx.Bmob.Pointer('_User')
+        const poiID = pointer.set(wx.Bmob.User.current().objectId)
+        query.equalTo('follower', "==", poiID)
+        const poiID2 = pointer.set(this.data.note.author.id)
+        query.equalTo('following', "==", poiID2)
+        const followResult = await query.find()
+        if (followResult.length > 0) {
+          const follow = wx.Bmob.Query('follow');
+          await follow.destroy(followResult[0].objectId);
+        }
+      } else {
+        // 添加关注
+        const followerId = wx.Bmob.User.current().objectId;
+        const followingId = this.data.note.author.id;
+        const follow = wx.Bmob.Query('follow')
+        const pointer = wx.Bmob.Pointer('_User')
+        const poiID = pointer.set(followerId)
+        follow.set('follower', poiID)
+        const poiID2 = pointer.set(followingId)
+        follow.set('following', poiID2)
+        follow.set('status', 1)
+        await follow.save()
+      }
+
+      this.setData({
+        isFollowing: !this.data.isFollowing
+      });
+
+      wx.showToast({
+        title: this.data.isFollowing ? '关注成功' : '已取消关注',
+        icon: 'success'
+      });
+    } catch (error) {
+      console.error('关注操作失败:', error);
+      wx.showToast({
+        title: '操作失败，请重试',
+        icon: 'none'
+      });
+    }
+  },
+
+  // 展开/收起文本
+  toggleExpand() {
+    this.setData({
+      isExpanded: !this.data.isExpanded
     });
   },
 
@@ -291,5 +382,55 @@ Page({
   onUnload() {
     // 页面卸载时释放视频上下文
     this.videoContext = null;
+  },
+
+  // 视频播放进度更新
+  onTimeUpdate(e) {
+    const { currentTime, duration } = e.detail;
+    // 记录视频总时长
+    if (duration !== this.data.videoDuration) {
+      this.setData({ videoDuration: duration });
+    }
+    // 非拖动状态下更新进度
+    if (!this.data.isDragging) {
+      const progress = (currentTime / duration) * 100;
+      this.setData({ progress });
+    }
+  },
+
+  // 进度条触摸开始
+  onProgressTouchStart(e) {
+    this.setData({ isDragging: true });
+    this.updateProgressByTouch(e);
+  },
+
+  // 进度条触摸移动
+  onProgressTouchMove(e) {
+    if (this.data.isDragging) {
+      this.updateProgressByTouch(e);
+    }
+  },
+
+  // 进度条触摸结束
+  onProgressTouchEnd(e) {
+    if (this.data.isDragging) {
+      this.updateProgressByTouch(e);
+      this.setData({ isDragging: false });
+      // 跳转到对应时间点
+      const time = (this.data.progress / 100) * this.data.videoDuration;
+      this.videoContext.seek(time);
+    }
+  },
+
+  // 根据触摸位置更新进度
+  updateProgressByTouch(e) {
+    const touch = e.touches[0];
+    const progressBar = wx.createSelectorQuery();
+    progressBar.select('.progress-bar').boundingClientRect((rect) => {
+      if (rect) {
+        const progress = Math.min(Math.max(((touch.clientX - rect.left) / rect.width) * 100, 0), 100);
+        this.setData({ progress });
+      }
+    }).exec();
   }
 }); 
