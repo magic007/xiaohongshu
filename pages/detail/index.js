@@ -52,6 +52,17 @@ Page({
       const note = await query.get(this.data.noteData.objectId)
       console.log('获取到的原始笔记数据:', note)
       
+      // 查询点赞数量
+      const likeQuery = new wx.Bmob.Query('like')
+      const notePointer = wx.Bmob.Pointer('note')
+      likeQuery.equalTo('note', "==", notePointer.set(this.data.noteData.objectId))
+      const likeCount = await likeQuery.count() // 获取点赞数量
+
+      // 查询收藏数量
+      const favoriteQuery = new wx.Bmob.Query('favorite')
+      favoriteQuery.equalTo('note', "==", notePointer.set(this.data.noteData.objectId))
+      const favoriteCount = await favoriteQuery.count() // 获取收藏数量
+
       // 检查是否已关注
       const currentUser = wx.Bmob.User.current()
       let isFollowing = false
@@ -77,8 +88,8 @@ Page({
           tags: note.tags || [],
           location: note.location || '',
           createTime: note.createdAt.split(' ')[0],
-          likeCount: note.likeCount || 0,
-          favoriteCount: note.favoriteCount || 0,
+          likeCount: likeCount, // 设置点赞数量
+          favoriteCount: favoriteCount, // 设置收藏数量
           commentCount: note.commentCount || 0,
           userInfo: note.author ? {
             objectId: note.author.objectId,
@@ -119,7 +130,7 @@ Page({
       const notePointer = wx.Bmob.Pointer('note')
       const userPointer = wx.Bmob.Pointer('_User')
       const noteObject = notePointer.set(this.data.noteData.objectId)
-      likeQuery.equalTo("note","==", noteObject)
+      likeQuery.equalTo("note", "==", noteObject)
       likeQuery.equalTo("user", "==", userPointer.set(currentUser.objectId))
 
       const likeResult = await likeQuery.find()
@@ -127,7 +138,7 @@ Page({
       // 检查是否收藏
       const favoriteQuery = new wx.Bmob.Query('favorite')
       const favoriteObject = notePointer.set(this.data.noteData.objectId)
-      favoriteQuery.equalTo("note","==", favoriteObject)
+      favoriteQuery.equalTo("note", "==", favoriteObject)
       favoriteQuery.equalTo("user", "==", userPointer.set(currentUser.objectId))
 
       const favoriteResult = await favoriteQuery.find()

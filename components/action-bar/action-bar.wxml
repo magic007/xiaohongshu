@@ -6,13 +6,6 @@
     <text class="text">分享</text>
   </button>
 
-  <view class="action-item" bindtap="onComment">
-    <view class="icon-wrapper">
-      <view class="icon icon-comment"></view>
-    </view>
-    <text class="text">{{commentCount}}</text>
-  </view>
-
   <view class="action-item" bindtap="onLike">
     <view class="icon-wrapper">
       <view class="icon icon-like {{isLiked ? 'active' : ''}}"></view>
@@ -25,5 +18,12 @@
       <view class="icon icon-favorite {{isFavorited ? 'active' : ''}}"></view>
     </view>
     <text class="text">{{favoriteCount}}</text>
+  </view>
+
+  <view class="action-item" bindtap="onComment">
+    <view class="icon-wrapper">
+      <view class="icon icon-comment"></view>
+    </view>
+    <text class="text">{{commentCount}}</text>
   </view>
 </view> 
