@@ -7,7 +7,7 @@
 
 .main-video {
   width: 100%;
-  height: calc(100vh - 160rpx); /* 减少互动区域高度 */
+  height: calc(100vh - 100rpx); /* 减少 action-bar 高度 */
   position: fixed;
   top: 0;
   left: 0;
@@ -59,10 +59,11 @@
   position: fixed;
   left: 0;
   right: 0;
-  bottom: 0;
+  bottom: 100rpx; /* 留出 action-bar 的高度 */
   z-index: 2;
   padding: 0;
   color: #fff;
+  padding-bottom: 20rpx; /* 增加底部间距 */
 }
 
 .author-info {
@@ -102,7 +103,7 @@
 }
 
 .note-content {
-  margin-bottom: 40rpx;
+  margin-bottom: 20rpx; /* 减小底部间距 */
   padding: 0 40rpx;
   position: relative;
 }
@@ -201,9 +202,9 @@
   position: fixed;
   left: 0;
   right: 0;
-  bottom: 120rpx;
-  height: 40rpx; /* 增加高度便于触摸 */
-  padding: 18rpx 0; /* 上下增加内边距便于触摸 */
+  bottom: 140rpx; /* 调整位置，避免与 action-bar 重叠 */
+  height: 40rpx;
+  padding: 18rpx 0;
   background: transparent;
   z-index: 3;
 }

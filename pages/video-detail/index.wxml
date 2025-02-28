@@ -65,25 +65,18 @@
         </view>
       </view>
     </view>
-
-    <!-- 互动按钮组 -->
-    <view class="interaction-buttons">
-      <view class="interaction-btn" bindtap="handleLike">
-        <view class="icon-like {{isLiked ? 'active' : ''}}"></view>
-        <text>{{note.likes || 0}}</text>
-      </view>
-      <view class="interaction-btn" bindtap="handleComment">
-        <view class="icon-comment"></view>
-        <text>{{note.commentCount || 0}}</text>
-      </view>
-      <view class="interaction-btn" bindtap="handleCollect">
-        <view class="icon-collect {{isCollected ? 'active' : ''}}"></view>
-        <text>收藏</text>
-      </view>
-      <view class="interaction-btn" bindtap="handleShare">
-        <view class="icon-share"></view>
-        <text>分享</text>
-      </view>
-    </view>
   </view>
+
+  <!-- 底部操作栏 -->
+  <action-bar
+    likeCount="{{note.likes || 0}}"
+    commentCount="{{note.commentCount || 0}}"
+    favoriteCount="{{note.favoriteCount || 0}}"
+    isLiked="{{isLiked}}"
+    isFavorited="{{isCollected}}"
+    bind:onLike="handleLike"
+    bind:onComment="handleComment"
+    bind:onFavorite="handleCollect"
+    bind:onShare="handleShare"
+  />
 </view> 
