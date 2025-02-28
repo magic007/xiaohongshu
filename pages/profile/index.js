@@ -87,7 +87,9 @@ Page({
       const notes = res.map(note => ({
         id: note.objectId,
         title: note.content,
-        type: note.type || 'image',
+        content: note.content,
+        video: note.video || '',
+        type: note.video ? 'video' : 'image',
         author: {
           avatar: note.author.avatar || '',
           nickname: note.author.nickname
@@ -115,7 +117,9 @@ Page({
         return {
           id: note.objectId,
           title: note.content,
-          type: note.type || 'image',
+          content: note.content,
+          video: note.video || '',
+          type: note.video ? 'video' : 'image',
           author: {
             avatar: note.author ? note.author.avatar || '' : '',
             nickname: note.author ? note.author.nickname || '未知用户' : '未知用户'
@@ -144,7 +148,9 @@ Page({
         return {
           id: note.objectId,
           title: note.content,
-          type: note.type || 'image',
+          content: note.content,
+          video: note.video || '',
+          type: note.video ? 'video' : 'image',
           author: {
             avatar: note.author ? note.author.avatar || '' : '',
             nickname: note.author ? note.author.nickname || '未知用户' : '未知用户'
