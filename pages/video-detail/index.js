@@ -145,8 +145,10 @@ Page({
     if (!current) return;
 
     const query = wx.Bmob.Query("like");
-    query.equalTo("user", "==", current.objectId);
-    query.equalTo("note", "==", noteId);
+    const pointerUser = wx.Bmob.Pointer('_User');
+    const pointerNote = wx.Bmob.Pointer('note');
+    query.equalTo("user", pointerUser.set(current.objectId));
+    query.equalTo("note", pointerNote.set(noteId));
     
     try {
       const likes = await query.find();
@@ -164,8 +166,10 @@ Page({
     if (!current) return;
 
     const query = wx.Bmob.Query("favorite");
-    query.equalTo("user", "==", current.objectId);
-    query.equalTo("note", "==", noteId);
+    const pointerUser = wx.Bmob.Pointer('_User');
+    const pointerNote = wx.Bmob.Pointer('note');
+    query.equalTo("user", pointerUser.set(current.objectId));
+    query.equalTo("note", pointerNote.set(noteId));
     
     try {
       const favorites = await query.find();
@@ -183,9 +187,11 @@ Page({
       const current = wx.Bmob.User.current();
       if (!current || !this.data.note?.author?.objectId) return;
 
-      const query = wx.Bmob.Query("Follow");
-      query.equalTo("userId", "==", current.objectId);
-      query.equalTo("followedId", "==", this.data.note.author.objectId);
+      const query = wx.Bmob.Query("follow");
+      const pointerUser = wx.Bmob.Pointer('_User');
+      const pointerAuthor = wx.Bmob.Pointer('_User');
+      query.equalTo("follower", pointerUser.set(current.objectId));
+      query.equalTo("following", pointerAuthor.set(this.data.note.author.objectId));
       const result = await query.find();
       this.setData({
         isFollowing: result.length > 0

@@ -1,3 +1,5 @@
 {
-  "usingComponents": {}
+  "usingComponents": {
+    "action-bar": "/components/action-bar/action-bar"
+  }
 }

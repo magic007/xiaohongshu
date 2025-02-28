@@ -43,28 +43,16 @@
   </view>
 
   <!-- 底部操作栏 -->
-  <view class="bottom-bar">
-    <view class="action-section">
-      <view class="action-left">
-        <view class="action-item" bindtap="handleLike">
-          <text class="iconfont icon-like"></text>
-          <text class="action-count">{{noteData.likeCount}}</text>
-        </view>
-        <view class="action-item" bindtap="handleStar">
-          <text class="iconfont icon-star"></text>
-          <text class="action-count">{{noteData.starCount}}</text>
-        </view>
-        <view class="action-item" bindtap="showCommentInput">
-          <text class="iconfont icon-comment"></text>
-          <text class="action-count">{{noteData.commentCount}}</text>
-        </view>
-      </view>
-      <view class="action-right">
-        <button class="share-btn" bindtap="handleShare">
-          <text class="iconfont icon-share"></text>
-          <text>分享</text>
-        </button>
-      </view>
-    </view>
-  </view>
+  <action-bar 
+    noteId="{{noteData.objectId}}"
+    isLiked="{{isLiked}}"
+    isFavorited="{{isFavorited}}"
+    likeCount="{{noteData.likeCount}}"
+    favoriteCount="{{noteData.favoriteCount}}"
+    commentCount="{{noteData.commentCount}}"
+    bind:like="handleLike"
+    bind:favorite="handleFavorite"
+    bind:comment="handleComment"
+    bind:share="handleShare"
+  />
 </view>

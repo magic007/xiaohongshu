@@ -4,7 +4,7 @@ const app = getApp()
 Page({
   data: {
     noteData: {
-      id: '',
+      objectId: '',
       title: '',
       content: '',
       images: [],
@@ -12,7 +12,7 @@ Page({
       location: '',
       createTime: '',
       likeCount: 0,
-      starCount: 0,
+      favoriteCount: 0,
       commentCount: 0,
       userInfo: {
         objectId: '',
@@ -22,6 +22,8 @@ Page({
     },
     comments: [],
     isFollowing: false,
+    isLiked: false,
+    isFavorited: false,
     currentPage: 1,
     pageSize: 10,
     hasMore: true
@@ -31,22 +33,23 @@ Page({
     console.log('页面加载参数:', options)
     const noteId = options.id
     this.setData({
-      'noteData.id': noteId
+      'noteData.objectId': noteId
     })
     this.fetchNoteDetail()
     this.fetchComments()
+    this.checkUserInteraction()
   },
 
   // 获取笔记详情
   async fetchNoteDetail() {
     try {
-      console.log('开始获取笔记详情, ID:', this.data.noteData.id)
+      console.log('开始获取笔记详情, ID:', this.data.noteData.objectId)
       
       const query = new wx.Bmob.Query('note')
       query.include('author','category')
       
       console.log('执行查询前...')
-      const note = await query.get(this.data.noteData.id)
+      const note = await query.get(this.data.noteData.objectId)
       console.log('获取到的原始笔记数据:', note)
       
       // 检查是否已关注
@@ -67,7 +70,7 @@ Page({
       // 更新数据
       const updateData = {
         noteData: {
-          id: note.objectId,
+          objectId: note.objectId,
           title: note.title || '',
           content: note.content || '',
           images: note.images || [],
@@ -75,7 +78,7 @@ Page({
           location: note.location || '',
           createTime: note.createdAt.split(' ')[0],
           likeCount: note.likeCount || 0,
-          starCount: note.favoriteCount || 0,
+          favoriteCount: note.favoriteCount || 0,
           commentCount: note.commentCount || 0,
           userInfo: note.author ? {
             objectId: note.author.objectId,
@@ -105,13 +108,48 @@ Page({
     }
   },
 
+  // 检查用户是否点赞和收藏
+  async checkUserInteraction() {
+    const currentUser = wx.Bmob.User.current()
+    if (!currentUser) return
+
+    try {
+      // 检查是否点赞
+      const likeQuery = new wx.Bmob.Query('like')
+      const notePointer = wx.Bmob.Pointer('note')
+      const userPointer = wx.Bmob.Pointer('_User')
+      const noteObject = notePointer.set(this.data.noteData.objectId)
+      likeQuery.equalTo("note","==", noteObject)
+      likeQuery.equalTo("user", "==", userPointer.set(currentUser.objectId))
+
+      const likeResult = await likeQuery.find()
+      
+      // 检查是否收藏
+      const favoriteQuery = new wx.Bmob.Query('favorite')
+      const favoriteObject = notePointer.set(this.data.noteData.objectId)
+      favoriteQuery.equalTo("note","==", favoriteObject)
+      favoriteQuery.equalTo("user", "==", userPointer.set(currentUser.objectId))
+
+      const favoriteResult = await favoriteQuery.find()
+
+      this.setData({
+        isLiked: likeResult.length > 0,
+        isFavorited: favoriteResult.length > 0
+      })
+    } catch (error) {
+      console.error('检查用户交互状态失败:', error)
+    }
+  },
+
   // 获取评论列表
   async fetchComments() {
     if (!this.data.hasMore) return
     
     try {
       const query = new wx.Bmob.Query('comment')
-      query.equalTo('note', this.data.noteData.id)
+      const notePointer = wx.Bmob.Pointer('note')
+      const noteObject = notePointer.set(this.data.noteData.objectId)
+      query.equalTo('note', "==", noteObject)
       query.equalTo('status', 1) // 只查询已发布的评论
       query.equalTo('level', 1) // 只查询一级评论
       query.limit(this.data.pageSize)
@@ -167,20 +205,15 @@ Page({
         query.equalTo('following', "==", poiID2)
         const followResult = await query.find()
         if (followResult.length > 0) {
-          const follow = wx.Bmob.Query('follow');
-          await follow.destroy(followResult[0].objectId);
+          await followResult[0].destroy()
         }
       } else {
         // 添加关注
-        const followerId = wx.Bmob.User.current().objectId;
-        const followingId = this.data.noteData.userInfo.objectId;
-        console.log('followerId:', followerId);
-        console.log('followingId:', followingId);
         const follow = wx.Bmob.Query('follow')
         const pointer = wx.Bmob.Pointer('_User')
-        const poiID = pointer.set(followerId)
+        const poiID = pointer.set(wx.Bmob.User.current().objectId)
         follow.set('follower', poiID)
-        const poiID2 = pointer.set(followingId)
+        const poiID2 = pointer.set(this.data.noteData.userInfo.objectId)
         follow.set('following', poiID2)
         follow.set('status', 1)
         await follow.save()
@@ -202,8 +235,8 @@ Page({
     }
   },
 
-  // 点赞笔记
-  async handleLike() {
+  // 处理点赞事件
+  handleLike(e) {
     if (!wx.Bmob.User.current()) {
       wx.navigateTo({
         url: '/pages/login/index'
@@ -211,39 +244,14 @@ Page({
       return
     }
 
-    try {
-      const query = new wx.Bmob.Query('like')
-      query.equalTo('user', wx.Bmob.User.current().objectId)
-      query.equalTo('note', this.data.noteData.id)
-      const like = await query.first()
-
-      if (like) {
-        // 取消点赞
-        await like.destroy()
-        this.setData({
-          'noteData.likeCount': this.data.noteData.likeCount - 1
-        })
-      } else {
-        // 添加点赞
-        const Like = wx.Bmob.Object.extend('like')
-        const newLike = new Like()
-        newLike.set('user', wx.Bmob.User.current().objectId)
-        newLike.set('note', this.data.noteData.id)
-        await newLike.save()
-        this.setData({
-          'noteData.likeCount': this.data.noteData.likeCount + 1
-        })
-      }
-    } catch (error) {
-      wx.showToast({
-        title: '操作失败',
-        icon: 'none'
-      })
-    }
+    this.setData({
+      isLiked: e.detail.isLiked,
+      'noteData.likeCount': e.detail.likeCount
+    })
   },
 
-  // 收藏笔记
-  async handleStar() {
+  // 处理收藏事件
+  handleFavorite(e) {
     if (!wx.Bmob.User.current()) {
       wx.navigateTo({
         url: '/pages/login/index'
@@ -251,39 +259,28 @@ Page({
       return
     }
 
-    try {
-      const query = new wx.Bmob.Query('favorite')
-      query.equalTo('user', wx.Bmob.User.current().objectId)
-      query.equalTo('note', this.data.noteData.id)
-      const favorite = await query.first()
-
-      if (favorite) {
-        // 取消收藏
-        await favorite.destroy()
-        this.setData({
-          'noteData.starCount': this.data.noteData.starCount - 1
-        })
-      } else {
-        // 添加收藏
-        const Favorite = wx.Bmob.Object.extend('favorite')
-        const newFavorite = new Favorite()
-        newFavorite.set('user', wx.Bmob.User.current().objectId)
-        newFavorite.set('note', this.data.noteData.id)
-        newFavorite.set('status', 1) // 1表示公开
-        await newFavorite.save()
-        this.setData({
-          'noteData.starCount': this.data.noteData.starCount + 1
-        })
-      }
-    } catch (error) {
-      wx.showToast({
-        title: '操作失败',
-        icon: 'none'
-      })
-    }
+    this.setData({
+      isFavorited: e.detail.isFavorited,
+      'noteData.favoriteCount': e.detail.favoriteCount
+    })
   },
 
-  // 分享
+  // 处理评论事件
+  handleComment() {
+    if (!wx.Bmob.User.current()) {
+      wx.navigateTo({
+        url: '/pages/login/index'
+      })
+      return
+    }
+
+    wx.showToast({
+      title: '评论功能开发中',
+      icon: 'none'
+    })
+  },
+
+  // 处理分享事件
   handleShare() {
     wx.showShareMenu({
       withShareTicket: true,
@@ -291,92 +288,21 @@ Page({
     })
   },
 
-  // 显示评论输入框
-  showCommentInput() {
-    if (!wx.Bmob.User.current()) {
-      wx.navigateTo({
-        url: '/pages/login/index'
-      })
-      return
-    }
-
-    wx.navigateTo({
-      url: `/pages/comment/index?noteId=${this.data.noteData.id}`
-    })
-  },
-
-  // 点赞评论
-  async handleCommentLike(e) {
-    if (!wx.Bmob.User.current()) {
-      wx.navigateTo({
-        url: '/pages/login/index'
-      })
-      return
-    }
-
-    const commentId = e.currentTarget.dataset.id
-    try {
-      const query = new wx.Bmob.Query('like')
-      query.equalTo('user', wx.Bmob.User.current().objectId)
-      query.equalTo('comment', commentId)
-      const like = await query.first()
-
-      if (like) {
-        // 取消点赞
-        await like.destroy()
-        this.setData({
-          comments: this.data.comments.map(comment => {
-            if (comment.id === commentId) {
-              return {
-                ...comment,
-                likeCount: comment.likeCount - 1
-              }
-            }
-            return comment
-          })
-        })
-      } else {
-        // 添加点赞
-        const Like = wx.Bmob.Object.extend('like')
-        const newLike = new Like()
-        newLike.set('user', wx.Bmob.User.current().objectId)
-        newLike.set('comment', commentId)
-        await newLike.save()
-        this.setData({
-          comments: this.data.comments.map(comment => {
-            if (comment.id === commentId) {
-              return {
-                ...comment,
-                likeCount: comment.likeCount + 1
-              }
-            }
-            return comment
-          })
-        })
-      }
-    } catch (error) {
-      wx.showToast({
-        title: '操作失败',
-        icon: 'none'
-      })
-    }
-  },
-
-  onReachBottom: function() {
-    this.fetchComments()
-  },
-
-  onShareAppMessage: function() {
+  // 分享给朋友
+  onShareAppMessage() {
     return {
-      title: this.data.noteData.title,
-      path: `/pages/detail/index?id=${this.data.noteData.id}`
+      title: this.data.noteData.content.substring(0, 20) + '...',
+      path: '/pages/detail/index?id=' + this.data.noteData.objectId,
+      imageUrl: this.data.noteData.images[0]
     }
   },
 
-  onShareTimeline: function() {
+  // 分享到朋友圈
+  onShareTimeline() {
     return {
-      title: this.data.noteData.title,
-      query: `id=${this.data.noteData.id}`
+      title: this.data.noteData.content.substring(0, 20) + '...',
+      query: 'id=' + this.data.noteData.objectId,
+      imageUrl: this.data.noteData.images[0]
     }
   }
 })
