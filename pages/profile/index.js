@@ -33,10 +33,13 @@ Page({
 
   // 处理笔记点击
   onTapNote(e) {
-    const { note } = e.detail;
-    wx.navigateTo({
-      url: `/pages/note-detail/index?id=${note.id}`
-    });
+    const note = e.currentTarget.dataset.note;
+    // 根据笔记类型跳转到不同页面
+    const url = note.video 
+      ? `/pages/video-detail/index?id=${note.id}`
+      : `/pages/detail/index?id=${note.id}`;
+    
+    wx.navigateTo({ url });
   },
 
   // 处理点赞

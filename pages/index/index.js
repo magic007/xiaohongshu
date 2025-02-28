@@ -19,7 +19,9 @@ Page({
     hasMore: true,
     isRefreshing: false,
     categories: [],
-    contentList: []
+    contentList: [],
+    leftList: [],
+    rightList: []
   },
   bindViewTap() {
     wx.navigateTo({
@@ -94,6 +96,37 @@ Page({
       });
     }
   },
+  // 格式化笔记数据
+  formatNotes(notes) {
+    return notes.map(note => {
+      return {
+        id: note.objectId,
+        title: note.content,
+        content: note.content,
+        video: note.video || '',
+        author: {
+          nickname: note.author?.nickname || '匿名用户',
+          avatar: note.author?.avatar || '/assets/images/default-avatar.png'
+        },
+        likes: note.likeCount || 0,
+        commentCount: note.commentCount || 0,
+        images: note.images || ['/assets/images/default-cover.png'],
+        createTime: note.createdAt.split(' ')[0]
+      };
+    });
+  },
+  // 更新瀑布流数据
+  updateWaterfallData(notes) {
+    const { leftList, rightList } = this.data;
+    notes.forEach((note, index) => {
+      if (index % 2 === 0) {
+        leftList.push(note);
+      } else {
+        rightList.push(note);
+      }
+    });
+    return { leftList, rightList };
+  },
   // 加载初始数据
   async loadInitialData() {
     const query = this.getNotesQuery();
@@ -102,8 +135,13 @@ Page({
     
     try {
       const notes = await query.find();
+      const formattedNotes = this.formatNotes(notes);
+      const { leftList, rightList } = this.updateWaterfallData(formattedNotes);
+      
       this.setData({
-        contentList: this.formatNotes(notes),
+        contentList: formattedNotes,
+        leftList,
+        rightList,
         pageNum: 1,
         hasMore: notes.length === this.data.pageSize
       });
@@ -131,29 +169,6 @@ Page({
     
     return query;
   },
-  // 格式化笔记数据
-  formatNotes(notes) {
-    return notes.map(note => {
-      console.log('完整的笔记数据:', note);
-      console.log('作者信息:', note.author);
-      console.log('作者昵称:', note.author ? note.author.nickname : '无昵称');
-      
-      return {
-        id: note.objectId,
-        title: note.content,
-        content: note.content,
-        video: note.video || '', // 视频地址
-        author: {
-          nickname: note.author?.nickname || '匿名用户',
-          avatar: note.author?.avatar || '/assets/images/default-avatar.png'
-        },
-        likes: note.likeCount || 0,
-        commentCount: note.commentCount || 0,
-        images: note.images || ['/assets/images/default-cover.png'],
-        createTime: note.createdAt.split(' ')[0]
-      };
-    });
-  },
   // 加载更多数据
   async loadMore() {
     if (!this.data.hasMore) return;
@@ -169,9 +184,12 @@ Page({
     try {
       const notes = await query.find();
       const formattedNotes = this.formatNotes(notes);
+      const { leftList, rightList } = this.updateWaterfallData(formattedNotes);
       
       this.setData({
         contentList: [...this.data.contentList, ...formattedNotes],
+        leftList,
+        rightList,
         pageNum: this.data.pageNum + 1,
         hasMore: notes.length === this.data.pageSize
       });
@@ -207,6 +225,8 @@ Page({
     this.setData({
       currentTab: index,
       contentList: [],
+      leftList: [],
+      rightList: [],
       pageNum: 1,
       hasMore: true
     });

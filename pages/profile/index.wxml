@@ -55,7 +55,8 @@
           wx:key="id"
           note="{{item}}"
           type="{{item.type}}"
-          bind:tap="onTapNote"
+          bindtap="onTapNote"
+          data-note="{{item}}"
           bind:like="onLikeNote"
         />
       </view>
@@ -70,7 +71,8 @@
           wx:key="id"
           note="{{item}}"
           type="{{item.type}}"
-          bind:tap="onTapNote"
+          bindtap="onTapNote"
+          data-note="{{item}}"
           bind:like="onLikeNote"
         />
       </view>
@@ -85,7 +87,8 @@
           wx:key="id"
           note="{{item}}"
           type="{{item.type}}"
-          bind:tap="onTapNote"
+          bindtap="onTapNote"
+          data-note="{{item}}"
           bind:like="onLikeNote"
         />
       </view>
