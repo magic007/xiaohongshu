@@ -20,7 +20,7 @@
   position: fixed;
   left: 0;
   right: 0;
-  z-index: 10;
+  z-index: 110;
   padding: 20rpx;
   display: flex;
   gap: 20rpx;
@@ -59,8 +59,8 @@
   position: fixed;
   left: 0;
   right: 0;
-  bottom: 100rpx; /* 留出 action-bar 的高度 */
-  z-index: 2;
+  bottom: 166rpx; /* 留出 action-bar 的高度 */
+  z-index: 90;
   padding: 0;
   color: #fff;
   padding-bottom: 20rpx; /* 增加底部间距 */
@@ -202,11 +202,11 @@
   position: fixed;
   left: 0;
   right: 0;
-  bottom: 140rpx; /* 调整位置，避免与 action-bar 重叠 */
+  bottom: 136rpx; /* 调整位置，避免与 action-bar 重叠 */
   height: 40rpx;
   padding: 18rpx 0;
   background: transparent;
-  z-index: 3;
+  z-index: 95;
 }
 
 .progress-inner {

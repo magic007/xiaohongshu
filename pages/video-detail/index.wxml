@@ -69,14 +69,12 @@
 
   <!-- 底部操作栏 -->
   <action-bar
-    likeCount="{{note.likes || 0}}"
+    isDark="{{true}}"
+    noteId="{{note.objectId}}"
     commentCount="{{note.commentCount || 0}}"
-    favoriteCount="{{note.favoriteCount || 0}}"
-    isLiked="{{isLiked}}"
-    isFavorited="{{isCollected}}"
-    bind:onLike="handleLike"
-    bind:onComment="handleComment"
-    bind:onFavorite="handleCollect"
-    bind:onShare="handleShare"
+    bind:like="handleLike"
+    bind:comment="handleComment"
+    bind:favorite="handleFavorite"
+    bind:share="handleShare"
   />
 </view> 

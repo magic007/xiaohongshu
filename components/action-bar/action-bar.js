@@ -1,33 +1,104 @@
 Component({
   properties: {
-    noteId: String,
-    isLiked: {
-      type: Boolean,
-      value: false
-    },
-    isFavorited: {
-      type: Boolean, 
-      value: false
-    },
-    likeCount: {
-      type: Number,
-      value: 0
-    },
-    favoriteCount: {
-      type: Number,
-      value: 0
+    noteId: {
+      type: String,
+      value: '',
+      observer: function(newVal) {
+        if (newVal) {
+          this.initData();
+          this.checkUserInteraction();
+        }
+      }
     },
     commentCount: {
       type: Number,
       value: 0
+    },
+    isDark: {
+      type: Boolean,
+      value: false
     }
   },
 
   data: {
-    current: null
+    _isLiked: false,
+    _isFavorited: false,
+    _likeCount: 0,
+    _favoriteCount: 0
+  },
+
+  lifetimes: {
+    attached() {
+      if (this.properties.noteId) {
+        this.initData();
+        this.checkUserInteraction();
+      }
+    }
   },
 
   methods: {
+    // 初始化数据
+    async initData() {
+      try {
+        const noteQuery = wx.Bmob.Query('note');
+        const note = await noteQuery.get(this.properties.noteId);
+        
+        this.setData({
+          _likeCount: note.likeCount || 0,
+          _favoriteCount: note.favoriteCount || 0
+        });
+      } catch (error) {
+        console.error('获取数据失败:', error);
+      }
+    },
+
+    // 检查用户是否点赞和收藏
+    async checkUserInteraction() {
+      const current = wx.Bmob.User.current();
+      if (!current) return;
+
+      try {
+        // 检查是否点赞
+        const likeQuery = wx.Bmob.Query('like');
+        const notePointer = wx.Bmob.Pointer('note');
+        const userPointer = wx.Bmob.Pointer('_User');
+        likeQuery.equalTo("note", "==", notePointer.set(this.properties.noteId));
+        likeQuery.equalTo("user", "==", userPointer.set(current.objectId));
+        const likeResult = await likeQuery.find();
+        
+        // 检查是否收藏
+        const favoriteQuery = wx.Bmob.Query('favorite');
+        favoriteQuery.equalTo("note", "==", notePointer.set(this.properties.noteId));
+        favoriteQuery.equalTo("user", "==", userPointer.set(current.objectId));
+        const favoriteResult = await favoriteQuery.find();
+
+        this.setData({
+          _isLiked: likeResult.length > 0,
+          _isFavorited: favoriteResult.length > 0
+        });
+      } catch (error) {
+        console.error('检查用户交互状态失败:', error);
+      }
+    },
+
+    // 更新笔记的点赞和收藏数量
+    async updateNoteStats(type, isAdd) {
+      try {
+        const noteQuery = wx.Bmob.Query('note');
+        const note = await noteQuery.get(this.properties.noteId);
+        
+        if (type === 'like') {
+          note.set('likeCount', (note.likeCount || 0) + (isAdd ? 1 : -1));
+        } else if (type === 'favorite') {
+          note.set('favoriteCount', (note.favoriteCount || 0) + (isAdd ? 1 : -1));
+        }
+        
+        await note.save();
+      } catch (error) {
+        console.error('更新笔记统计失败:', error);
+      }
+    },
+
     // 点赞
     async onLike() {
       const current = wx.Bmob.User.current();
@@ -44,22 +115,21 @@ Component({
         return;
       }
 
-      const query = wx.Bmob.Query('like');
-      const notePointer = wx.Bmob.Pointer('note');
-      const noteObject = notePointer.set(this.properties.noteId);
-      const userPointer = wx.Bmob.Pointer('_User');
-      const userObject = userPointer.set(current.objectId);
-      
       try {
-        if(!this.properties.isLiked) {
+        if (!this.data._isLiked) {
           // 添加点赞
-          query.set("note", noteObject);
-          query.set("user", userObject);
+          const query = wx.Bmob.Query('like');
+          const notePointer = wx.Bmob.Pointer('note');
+          const userPointer = wx.Bmob.Pointer('_User');
+          query.set("note", notePointer.set(this.properties.noteId));
+          query.set("user", userPointer.set(current.objectId));
           await query.save();
           
-          this.triggerEvent('like', {
-            isLiked: true,
-            likeCount: this.properties.likeCount + 1
+          await this.updateNoteStats('like', true);
+          
+          this.setData({
+            _isLiked: true,
+            _likeCount: this.data._likeCount + 1
           });
 
           wx.showToast({
@@ -68,15 +138,20 @@ Component({
           });
         } else {
           // 取消点赞
-          query.equalTo("note", "==", noteObject);
-          query.equalTo("user", "==", userObject);
+          const query = wx.Bmob.Query('like');
+          const notePointer = wx.Bmob.Pointer('note');
+          const userPointer = wx.Bmob.Pointer('_User');
+          query.equalTo("note", "==", notePointer.set(this.properties.noteId));
+          query.equalTo("user", "==", userPointer.set(current.objectId));
           const res = await query.find();
+          
           if (res.length > 0) {
             await query.destroy(res[0].objectId);
+            await this.updateNoteStats('like', false);
             
-            this.triggerEvent('like', {
-              isLiked: false,
-              likeCount: this.properties.likeCount - 1
+            this.setData({
+              _isLiked: false,
+              _likeCount: this.data._likeCount - 1
             });
 
             wx.showToast({
@@ -85,6 +160,12 @@ Component({
             });
           }
         }
+
+        // 触发事件通知父组件
+        this.triggerEvent('like', {
+          isLiked: this.data._isLiked,
+          likeCount: this.data._likeCount
+        });
       } catch (error) {
         console.error('点赞操作失败:', error);
         wx.showToast({
@@ -110,22 +191,21 @@ Component({
         return;
       }
 
-      const query = wx.Bmob.Query('favorite');
-      const notePointer = wx.Bmob.Pointer('note');
-      const noteObject = notePointer.set(this.properties.noteId);
-      const userPointer = wx.Bmob.Pointer('_User');
-      const userObject = userPointer.set(current.objectId);
-
       try {
-        if(!this.properties.isFavorited) {
+        if (!this.data._isFavorited) {
           // 添加收藏
-          query.set("note", noteObject);
-          query.set("user", userObject);
+          const query = wx.Bmob.Query('favorite');
+          const notePointer = wx.Bmob.Pointer('note');
+          const userPointer = wx.Bmob.Pointer('_User');
+          query.set("note", notePointer.set(this.properties.noteId));
+          query.set("user", userPointer.set(current.objectId));
           await query.save();
           
-          this.triggerEvent('favorite', {
-            isFavorited: true,
-            favoriteCount: this.properties.favoriteCount + 1
+          await this.updateNoteStats('favorite', true);
+          
+          this.setData({
+            _isFavorited: true,
+            _favoriteCount: this.data._favoriteCount + 1
           });
 
           wx.showToast({
@@ -134,15 +214,20 @@ Component({
           });
         } else {
           // 取消收藏
-          query.equalTo("note", "==", noteObject);
-          query.equalTo("user", "==", userObject);
+          const query = wx.Bmob.Query('favorite');
+          const notePointer = wx.Bmob.Pointer('note');
+          const userPointer = wx.Bmob.Pointer('_User');
+          query.equalTo("note", "==", notePointer.set(this.properties.noteId));
+          query.equalTo("user", "==", userPointer.set(current.objectId));
           const res = await query.find();
+          
           if (res.length > 0) {
             await query.destroy(res[0].objectId);
+            await this.updateNoteStats('favorite', false);
             
-            this.triggerEvent('favorite', {
-              isFavorited: false,
-              favoriteCount: this.properties.favoriteCount - 1
+            this.setData({
+              _isFavorited: false,
+              _favoriteCount: this.data._favoriteCount - 1
             });
 
             wx.showToast({
@@ -151,6 +236,12 @@ Component({
             });
           }
         }
+
+        // 触发事件通知父组件
+        this.triggerEvent('favorite', {
+          isFavorited: this.data._isFavorited,
+          favoriteCount: this.data._favoriteCount
+        });
       } catch (error) {
         console.error('收藏操作失败:', error);
         wx.showToast({

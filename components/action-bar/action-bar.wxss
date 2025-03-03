@@ -9,8 +9,15 @@
   justify-content: flex-start;
   align-items: center;
   border-top: 1rpx solid rgba(0, 0, 0, 0.05);
-  padding-bottom: env(safe-area-inset-bottom);
   padding: 0 32rpx;
+  padding-bottom: calc(env(safe-area-inset-bottom) + 20rpx);
+  z-index: 100;
+}
+
+/* 添加暗黑模式样式 */
+.action-bar.dark {
+  background: #000;
+  border-top: 1rpx solid rgba(255, 255, 255, 0.1);
 }
 
 .action-item {
@@ -85,6 +92,15 @@
   box-sizing: border-box;
   background: #333;
   transition: transform 0.2s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+}
+
+/* 暗黑模式下的图标颜色 */
+.dark .icon:not(.active) {
+  background: #fff;
+}
+
+.dark .text {
+  color: rgba(255, 255, 255, 0.9);
 }
 
 /* 激活状态的图标颜色和动画 */
