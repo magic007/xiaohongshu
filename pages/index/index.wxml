@@ -8,7 +8,7 @@
         <view class="search-icon"></view>
         <input type="text" placeholder="国家公祭日" placeholder-class="search-placeholder" disabled />
       </view>
-      <image class="more-icon" src="/assets/images/more.png"></image>
+      <image class="more-icon"></image>
     </view>
   </view>
 

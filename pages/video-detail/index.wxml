@@ -44,9 +44,11 @@
     <view class="author-info">
       <view class="author-avatar" style="background: {{gradientBg}}"></view>
       <view class="author-name">{{note.author.nickname || note.author}}</view>
-      <view class="follow-btn {{isFollowing ? 'following' : ''}}" bindtap="followAuthor">
-        {{isFollowing ? '已关注' : '关注'}}
-      </view>
+      <follow-button 
+        isFollowing="{{isFollowing}}" 
+        userId="{{note.author.objectId}}"
+        bind:followChange="handleFollowChange"
+      />
     </view>
 
     <!-- 笔记内容 -->
@@ -77,4 +79,46 @@
     bind:favorite="handleFavorite"
     bind:share="handleShare"
   />
+
+  <!-- 评论弹出层 -->
+  <view class="comment-popup {{showComment ? 'show' : ''}}">
+    <view class="comment-mask" bindtap="hideComment"></view>
+    <view class="comment-container">
+      <view class="comment-header">
+        <text class="comment-title">共 {{note.commentCount || 0}} 条评论</text>
+        <view class="close-btn" bindtap="hideComment">
+          <view class="icon-close"></view>
+        </view>
+      </view>
+      <scroll-view 
+        scroll-y 
+        class="comment-list"
+        refresher-enabled="{{true}}"
+        refresher-triggered="{{isRefreshing}}"
+        bindrefresherrefresh="onRefresh"
+      >
+        <view class="comment-item" wx:for="{{comments}}" wx:key="objectId">
+          <view class="comment-user">
+            <view class="user-avatar" style="background: {{gradientBg}}"></view>
+            <view class="user-info">
+              <view class="user-name">{{item.user.nickname}}</view>
+              <view class="comment-time">{{item.createTime}}</view>
+            </view>
+          </view>
+          <view class="comment-content">{{item.content}}</view>
+        </view>
+      </scroll-view>
+      <view class="comment-input-area">
+        <input 
+          class="comment-input" 
+          placeholder="说点什么..." 
+          value="{{commentText}}"
+          bindinput="onCommentInput"
+          bindconfirm="submitComment"
+          confirm-type="send"
+        />
+        <view class="send-btn {{commentText ? 'active' : ''}}" bindtap="submitComment">发送</view>
+      </view>
+    </view>
+  </view>
 </view> 

@@ -12,8 +12,6 @@ function formatTime(dateStr) {
 Page({
   data: {
     note: null,
-    isLiked: false,
-    isCollected: false,
     isFollowing: false,
     isExpanded: false,
     statusBarHeight: 0,
@@ -21,7 +19,15 @@ Page({
     progress: 0,
     videoDuration: 0,
     isDragging: false,
-    isPlaying: true
+    isPlaying: true,
+    // 评论相关数据
+    showComment: false,
+    comments: [],
+    commentText: '',
+    isRefreshing: false,
+    page: 1,
+    pageSize: 20,
+    hasMore: true
   },
 
   onLoad(options) {
@@ -103,15 +109,16 @@ Page({
       
       // 格式化笔记数据
       const formattedNote = {
-        id: note.objectId,
+        objectId: note.objectId,
         content: note.content,
         video: note.video,
         author: {
-          id: note.author?.objectId,
+          objectId: note.author?.objectId,
           nickname: note.author?.nickname || '匿名用户',
           avatar: note.author?.avatar || '/assets/images/default-avatar.png'
         },
-        likes: note.likeCount || 0,
+        likeCount: note.likeCount || 0,
+        favoriteCount: note.favoriteCount || 0,
         commentCount: note.commentCount || 0,
         createTime: formatTime(note.createdAt),
         tags: note.tags || []
@@ -124,9 +131,7 @@ Page({
         }
       });
 
-      // 检查是否已点赞、收藏和关注
-      this.checkLikeStatus(noteId);
-      this.checkCollectStatus(noteId);
+      // 检查是否已关注
       if (note.author?.objectId) {
         this.checkFollowStatus();
       }
@@ -139,48 +144,6 @@ Page({
     }
   },
 
-  // 检查点赞状态
-  async checkLikeStatus(noteId) {
-    const current = wx.Bmob.User.current();
-    if (!current) return;
-
-    const query = wx.Bmob.Query("like");
-    const pointerUser = wx.Bmob.Pointer('_User');
-    const pointerNote = wx.Bmob.Pointer('note');
-    query.equalTo("user", pointerUser.set(current.objectId));
-    query.equalTo("note", pointerNote.set(noteId));
-    
-    try {
-      const likes = await query.find();
-      this.setData({
-        isLiked: likes.length > 0
-      });
-    } catch (error) {
-      console.error('检查点赞状态失败:', error);
-    }
-  },
-
-  // 检查收藏状态
-  async checkCollectStatus(noteId) {
-    const current = wx.Bmob.User.current();
-    if (!current) return;
-
-    const query = wx.Bmob.Query("favorite");
-    const pointerUser = wx.Bmob.Pointer('_User');
-    const pointerNote = wx.Bmob.Pointer('note');
-    query.equalTo("user", pointerUser.set(current.objectId));
-    query.equalTo("note", pointerNote.set(noteId));
-    
-    try {
-      const favorites = await query.find();
-      this.setData({
-        isCollected: favorites.length > 0
-      });
-    } catch (error) {
-      console.error('检查收藏状态失败:', error);
-    }
-  },
-
   // 检查关注状态
   async checkFollowStatus() {
     try {
@@ -190,8 +153,8 @@ Page({
       const query = wx.Bmob.Query("follow");
       const pointerUser = wx.Bmob.Pointer('_User');
       const pointerAuthor = wx.Bmob.Pointer('_User');
-      query.equalTo("follower", pointerUser.set(current.objectId));
-      query.equalTo("following", pointerAuthor.set(this.data.note.author.objectId));
+      query.equalTo("follower", "==", pointerUser.set(current.objectId));
+      query.equalTo("following", "==", pointerAuthor.set(this.data.note.author.objectId));
       const result = await query.find();
       this.setData({
         isFollowing: result.length > 0
@@ -202,117 +165,154 @@ Page({
   },
 
   // 处理点赞
-  async handleLike() {
-    const current = wx.Bmob.User.current();
-    if (!current) {
-      wx.showToast({
-        title: '请先登录',
-        icon: 'none'
-      });
-      return;
-    }
-
-    const noteId = this.data.note.id;
-    const query = wx.Bmob.Query("like");
-    
-    try {
-      if (this.data.isLiked) {
-        // 取消点赞
-        query.equalTo("user", "==", current.objectId);
-        query.equalTo("note", "==", noteId);
-        const likes = await query.find();
-        if (likes.length > 0) {
-          await query.destroy(likes[0].objectId);
-        }
-      } else {
-        // 添加点赞
-        query.set("user", current.objectId);
-        query.set("note", noteId);
-        await query.save();
-      }
-
-      // 更新点赞状态和数量
-      this.setData({
-        isLiked: !this.data.isLiked,
-        'note.likes': this.data.isLiked ? this.data.note.likes - 1 : this.data.note.likes + 1
-      });
-    } catch (error) {
-      console.error('点赞操作失败:', error);
-      wx.showToast({
-        title: '操作失败',
-        icon: 'none'
-      });
-    }
+  handleLike(e) {
+    // 接收来自 action-bar 组件的事件
+    const { isLiked, likeCount } = e.detail;
+    this.setData({
+      'note.likeCount': likeCount
+    });
   },
 
   // 处理收藏
-  async handleCollect() {
-    const current = wx.Bmob.User.current();
-    if (!current) {
-      wx.showToast({
-        title: '请先登录',
-        icon: 'none'
-      });
-      return;
-    }
-
-    const noteId = this.data.note.id;
-    const query = wx.Bmob.Query("favorite");
-    
-    try {
-      if (this.data.isCollected) {
-        // 取消收藏
-        query.equalTo("user", "==", current.objectId);
-        query.equalTo("note", "==", noteId);
-        const favorites = await query.find();
-        if (favorites.length > 0) {
-          await query.destroy(favorites[0].objectId);
-        }
-      } else {
-        // 添加收藏
-        query.set("user", current.objectId);
-        query.set("note", noteId);
-        await query.save();
-      }
-
-      // 更新收藏状态
-      this.setData({
-        isCollected: !this.data.isCollected
-      });
-
-      wx.showToast({
-        title: this.data.isCollected ? '已收藏' : '已取消收藏',
-        icon: 'success'
-      });
-    } catch (error) {
-      console.error('收藏操作失败:', error);
-      wx.showToast({
-        title: '操作失败',
-        icon: 'none'
-      });
-    }
+  handleFavorite(e) {
+    // 接收来自 action-bar 组件的事件
+    const { isFavorited, favoriteCount } = e.detail;
+    this.setData({
+      'note.favoriteCount': favoriteCount
+    });
   },
 
   // 处理评论
   handleComment() {
-    // TODO: 实现评论功能
-    wx.showToast({
-      title: '评论功能开发中',
-      icon: 'none'
+    // 检查登录状态
+    const current = wx.Bmob.User.current();
+    if (!current) {
+      wx.showToast({
+        title: '请先登录',
+        icon: 'none'
+      });
+      return;
+    }
+    this.setData({ showComment: true });
+    this.loadComments();
+  },
+
+  // 隐藏评论弹出层
+  hideComment() {
+    this.setData({ showComment: false });
+  },
+
+  // 加载评论列表
+  async loadComments(isRefresh = false) {
+    if (isRefresh) {
+      this.setData({
+        page: 1,
+        hasMore: true,
+        comments: []
+      });
+    }
+
+    if (!this.data.hasMore) return;
+
+    // 模拟评论数据
+    const mockComments = [
+      {
+        objectId: '1',
+        content: '这个视频太棒了！拍得真好，构图很美，希望能看到更多类似的作品！',
+        createTime: '2024-03-05 10:30',
+        user: {
+          objectId: 'user1',
+          nickname: '表情宝宝',
+          avatar: ''
+        }
+      },
+      {
+        objectId: '2',
+        content: '首先 文案说了挺嗨 不知道看不出来哪个的是什么理解能力 还有 嫦娥是cp里面的受唯 这一点cp向没有 这是泥塑好吗 嫦娥无妄之灾',
+        createTime: '2024-03-05 10:25',
+        user: {
+          objectId: 'user2',
+          nickname: '美式去冰',
+          avatar: ''
+        }
+      },
+      {
+        objectId: '3',
+        content: '这哥仨比起来，第二个堪称倾国倾城。不过第一个如果男装应该还不粗，鼻子长得可以，第三个我真的......',
+        createTime: '2024-03-05 10:20',
+        user: {
+          objectId: 'user3',
+          nickname: '女巫栀栀',
+          avatar: ''
+        }
+      },
+      {
+        objectId: '4',
+        content: '其实都很一般，没看出来哪一个是博主说的小白兔',
+        createTime: '2024-03-05 10:15',
+        user: {
+          objectId: 'user4',
+          nickname: '^ungh、',
+          avatar: ''
+        }
+      },
+      {
+        objectId: '5',
+        content: '? @欣欣必上岸',
+        createTime: '2024-03-05 10:10',
+        user: {
+          objectId: 'user5',
+          nickname: 'Gloria',
+          avatar: ''
+        }
+      }
+    ];
+
+    // 模拟分页
+    const start = (this.data.page - 1) * this.data.pageSize;
+    const end = start + this.data.pageSize;
+    const pageComments = mockComments.slice(start, end);
+
+    this.setData({
+      comments: [...this.data.comments, ...pageComments],
+      page: this.data.page + 1,
+      hasMore: pageComments.length === this.data.pageSize,
+      isRefreshing: false
+    });
+
+    // 更新评论总数
+    if (this.data.page === 2) {
+      this.setData({
+        'note.commentCount': mockComments.length
+      });
+    }
+  },
+
+  // 刷新评论列表
+  onRefresh() {
+    this.setData({ isRefreshing: true });
+    this.loadComments(true);
+  },
+
+  // 监听评论输入
+  onCommentInput(e) {
+    this.setData({
+      commentText: e.detail.value
     });
   },
 
-  // 处理分享
-  handleShare() {
-    wx.showShareMenu({
-      withShareTicket: true,
-      menus: ['shareAppMessage', 'shareTimeline']
-    });
-  },
+  // 提交评论
+  async submitComment() {
+    if (!this.data.commentText.trim()) {
+      wx.showToast({
+        title: '请输入评论内容',
+        icon: 'none'
+      });
+      return;
+    }
 
-  // 关注/取消关注作者
-  async followAuthor() {
-    if (!wx.Bmob.User.current()) {
+    const current = wx.Bmob.User.current();
+    if (!current) {
       wx.showToast({
         title: '请先登录',
         icon: 'none'
@@ -321,46 +321,106 @@ Page({
     }
 
     try {
-      if (this.data.isFollowing) {
-        // 取消关注
-        const query = new wx.Bmob.Query('follow')
-        const pointer = wx.Bmob.Pointer('_User')
-        const poiID = pointer.set(wx.Bmob.User.current().objectId)
-        query.equalTo('follower', "==", poiID)
-        const poiID2 = pointer.set(this.data.note.author.id)
-        query.equalTo('following', "==", poiID2)
-        const followResult = await query.find()
-        if (followResult.length > 0) {
-          const follow = wx.Bmob.Query('follow');
-          await follow.destroy(followResult[0].objectId);
-        }
-      } else {
-        // 添加关注
-        const followerId = wx.Bmob.User.current().objectId;
-        const followingId = this.data.note.author.id;
-        const follow = wx.Bmob.Query('follow')
-        const pointer = wx.Bmob.Pointer('_User')
-        const poiID = pointer.set(followerId)
-        follow.set('follower', poiID)
-        const poiID2 = pointer.set(followingId)
-        follow.set('following', poiID2)
-        follow.set('status', 1)
-        await follow.save()
-      }
+      const query = wx.Bmob.Query('comment');
+      query.set('noteId', this.data.note.objectId);
+      query.set('content', this.data.commentText.trim());
+      query.set('user', current.objectId);
+      await query.save();
 
-      this.setData({
-        isFollowing: !this.data.isFollowing
+      // 更新评论数
+      const noteQuery = wx.Bmob.Query('note');
+      noteQuery.get(this.data.note.objectId).then(note => {
+        note.increment('commentCount');
+        return note.save();
       });
 
+      // 清空输入框并刷新评论列表
+      this.setData({ commentText: '' });
+      this.loadComments(true);
+
       wx.showToast({
-        title: this.data.isFollowing ? '关注成功' : '已取消关注',
+        title: '评论成功',
         icon: 'success'
+      });
+    } catch (error) {
+      console.error('提交评论失败:', error);
+      wx.showToast({
+        title: '评论失败',
+        icon: 'none'
+      });
+    }
+  },
+
+  // 处理分享
+  handleShare() {
+    // 使用小程序原生分享
+  },
+
+  // 处理关注状态变化
+  async handleFollowChange(e) {
+    const { isFollowing, userId } = e.detail;
+    
+    try {
+      const current = wx.Bmob.User.current();
+      if (!current) {
+        wx.showToast({
+          title: '请先登录',
+          icon: 'none'
+        });
+        return;
+      }
+
+      const query = wx.Bmob.Query("follow");
+      
+      if (isFollowing) {
+        // 添加关注
+        query.set("follower", current.objectId);
+        query.set("following", userId);
+        await query.save();
+        
+        wx.showToast({
+          title: '已关注',
+          icon: 'success'
+        });
+      } else {
+        // 取消关注
+        query.equalTo("follower", "==", current.objectId);
+        query.equalTo("following", "==", userId);
+        const follows = await query.find();
+        if (follows.length > 0) {
+          await query.destroy(follows[0].objectId);
+        }
+        
+        wx.showToast({
+          title: '已取消关注',
+          icon: 'success'
+        });
+      }
+
+      // 更新关注状态
+      this.setData({
+        isFollowing: isFollowing
       });
     } catch (error) {
       console.error('关注操作失败:', error);
       wx.showToast({
-        title: '操作失败，请重试',
+        title: '操作失败',
         icon: 'none'
+      });
+    }
+  },
+
+  // 关注作者 (可以删除或保留作为备用)
+  async followAuthor() {
+    // 这个方法可以删除，因为我们现在使用组件处理关注逻辑
+    // 或者保留作为备用
+    const userId = this.data.note?.author?.objectId;
+    if (userId) {
+      this.handleFollowChange({
+        detail: {
+          isFollowing: !this.data.isFollowing,
+          userId: userId
+        }
       });
     }
   },
@@ -384,43 +444,46 @@ Page({
     });
   },
 
+  // 分享给朋友
   onShareAppMessage() {
     return {
-      title: this.data.note.title,
-      path: `/pages/video-detail/index?id=${this.data.note.id}`
+      title: this.data.note?.content || '分享一个视频',
+      path: `/pages/video-detail/index?id=${this.data.note?.objectId}`
     };
   },
 
+  // 分享到朋友圈
   onShareTimeline() {
     return {
-      title: this.data.note.title,
-      query: `id=${this.data.note.id}`
+      title: this.data.note?.content || '分享一个视频',
+      query: `id=${this.data.note?.objectId}`
     };
   },
 
+  // 页面卸载
   onUnload() {
-    // 页面卸载时释放视频上下文
-    this.videoContext = null;
+    if (this.videoContext) {
+      this.videoContext.pause();
+    }
   },
 
   // 视频播放进度更新
   onTimeUpdate(e) {
-    const { currentTime, duration } = e.detail;
-    // 记录视频总时长
-    if (duration !== this.data.videoDuration) {
-      this.setData({ videoDuration: duration });
-    }
-    // 非拖动状态下更新进度
     if (!this.data.isDragging) {
+      const { currentTime, duration } = e.detail;
       const progress = (currentTime / duration) * 100;
-      this.setData({ progress });
+      this.setData({
+        progress,
+        videoDuration: duration
+      });
     }
   },
 
   // 进度条触摸开始
-  onProgressTouchStart(e) {
-    this.setData({ isDragging: true });
-    this.updateProgressByTouch(e);
+  onProgressTouchStart() {
+    this.setData({
+      isDragging: true
+    });
   },
 
   // 进度条触摸移动
@@ -434,22 +497,22 @@ Page({
   onProgressTouchEnd(e) {
     if (this.data.isDragging) {
       this.updateProgressByTouch(e);
-      this.setData({ isDragging: false });
-      // 跳转到对应时间点
-      const time = (this.data.progress / 100) * this.data.videoDuration;
-      this.videoContext.seek(time);
+      this.setData({
+        isDragging: false
+      });
     }
   },
 
   // 根据触摸位置更新进度
   updateProgressByTouch(e) {
     const touch = e.touches[0];
-    const progressBar = wx.createSelectorQuery();
-    progressBar.select('.progress-bar').boundingClientRect((rect) => {
-      if (rect) {
-        const progress = Math.min(Math.max(((touch.clientX - rect.left) / rect.width) * 100, 0), 100);
-        this.setData({ progress });
-      }
+    const progressBar = wx.createSelectorQuery().select('.progress-bar');
+    progressBar.boundingClientRect((rect) => {
+      if (!rect) return;
+      const progress = Math.max(0, Math.min(100, ((touch.clientX - rect.left) / rect.width) * 100));
+      const currentTime = (progress / 100) * this.data.videoDuration;
+      this.setData({ progress });
+      this.videoContext.seek(currentTime);
     }).exec();
   }
 }); 

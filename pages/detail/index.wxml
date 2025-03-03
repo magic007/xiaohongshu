@@ -18,7 +18,11 @@
           <text class="nickname">{{noteData.userInfo.nickname}}</text>
         </view>
       </view>
-      <button class="follow-btn" bindtap="handleFollow">{{isFollowing ? '已关注' : '关注'}}</button>
+      <follow-button 
+        isFollowing="{{isFollowing}}" 
+        userId="{{noteData.userInfo.objectId}}"
+        bind:followChange="handleFollowChange"
+      />
     </view>
   </view>
 

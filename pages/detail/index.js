@@ -196,54 +196,25 @@ Page({
     }
   },
 
-  // 关注/取消关注
+  // 处理关注按钮组件的事件
+  handleFollowChange(e) {
+    const { isFollowing } = e.detail;
+    
+    // 更新页面状态
+    this.setData({
+      isFollowing: isFollowing
+    });
+  },
+
+  // 原来的关注方法，保留作为备用
   async handleFollow() {
-    if (!wx.Bmob.User.current()) {
-      wx.navigateTo({
-        url: '/pages/login/index'
-      })
-      return
-    }
-
-    try {
-      if (this.data.isFollowing) {
-        // 取消关注
-        const query = new wx.Bmob.Query('follow')
-        const pointer = wx.Bmob.Pointer('_User')
-        const poiID = pointer.set(wx.Bmob.User.current().objectId)
-        query.equalTo('follower', "==", poiID)
-        const poiID2 = pointer.set(this.data.noteData.userInfo.objectId)
-        query.equalTo('following', "==", poiID2)
-        const followResult = await query.find()
-        if (followResult.length > 0) {
-          await followResult[0].destroy()
-        }
-      } else {
-        // 添加关注
-        const follow = wx.Bmob.Query('follow')
-        const pointer = wx.Bmob.Pointer('_User')
-        const poiID = pointer.set(wx.Bmob.User.current().objectId)
-        follow.set('follower', poiID)
-        const poiID2 = pointer.set(this.data.noteData.userInfo.objectId)
-        follow.set('following', poiID2)
-        follow.set('status', 1)
-        await follow.save()
+    // 调用新的方法，传递当前状态的反向值和用户ID
+    this.handleFollowChange({
+      detail: {
+        isFollowing: !this.data.isFollowing,
+        userId: this.data.noteData.userInfo.objectId
       }
-
-      this.setData({
-        isFollowing: !this.data.isFollowing
-      })
-
-      wx.showToast({
-        title: this.data.isFollowing ? '关注成功' : '已取消关注',
-        icon: 'success'
-      })
-    } catch (error) {
-      wx.showToast({
-        title: '操作失败',
-        icon: 'none'
-      })
-    }
+    });
   },
 
   // 处理点赞事件

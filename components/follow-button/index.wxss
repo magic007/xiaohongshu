@@ -1,0 +1,19 @@
+.follow-btn {
+  padding: 10rpx 30rpx;
+  background: linear-gradient(to right, #ff4e50, #f9526b);
+  border-radius: 32rpx;
+  font-size: 28rpx;
+  color: #fff;
+  font-weight: 600;
+  text-align: center;
+  min-width: 120rpx;
+  display: inline-block;
+  box-shadow: 0 4rpx 8rpx rgba(255, 78, 80, 0.2);
+  transition: all 0.3s ease;
+}
+
+.follow-btn.following {
+  background: #f2f2f2;
+  color: #999;
+  box-shadow: none;
+}

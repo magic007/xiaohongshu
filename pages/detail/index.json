@@ -1,5 +1,6 @@
 {
   "usingComponents": {
-    "action-bar": "/components/action-bar/action-bar"
+    "action-bar": "/components/action-bar/action-bar",
+    "follow-button": "/components/follow-button/index"
   }
 }

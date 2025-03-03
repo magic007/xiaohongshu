@@ -88,9 +88,11 @@ Component({
         const note = await noteQuery.get(this.properties.noteId);
         
         if (type === 'like') {
-          note.set('likeCount', (note.likeCount || 0) + (isAdd ? 1 : -1));
+          const newCount = Math.max(0, (note.likeCount || 0) + (isAdd ? 1 : -1));
+          note.set('likeCount', newCount);
         } else if (type === 'favorite') {
-          note.set('favoriteCount', (note.favoriteCount || 0) + (isAdd ? 1 : -1));
+          const newCount = Math.max(0, (note.favoriteCount || 0) + (isAdd ? 1 : -1));
+          note.set('favoriteCount', newCount);
         }
         
         await note.save();
@@ -149,9 +151,11 @@ Component({
             await query.destroy(res[0].objectId);
             await this.updateNoteStats('like', false);
             
+            // 确保点赞数不会小于0
+            const newLikeCount = Math.max(0, this.data._likeCount - 1);
             this.setData({
               _isLiked: false,
-              _likeCount: this.data._likeCount - 1
+              _likeCount: newLikeCount
             });
 
             wx.showToast({
@@ -225,9 +229,11 @@ Component({
             await query.destroy(res[0].objectId);
             await this.updateNoteStats('favorite', false);
             
+            // 确保收藏数不会小于0
+            const newFavoriteCount = Math.max(0, this.data._favoriteCount - 1);
             this.setData({
               _isFavorited: false,
-              _favoriteCount: this.data._favoriteCount - 1
+              _favoriteCount: newFavoriteCount
             });
 
             wx.showToast({

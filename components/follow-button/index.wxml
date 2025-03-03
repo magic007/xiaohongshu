@@ -1,0 +1,3 @@
+<view class="follow-btn {{isFollowing ? 'following' : ''}}" bindtap="toggleFollow">
+  {{isFollowing ? '已关注' : '关注'}}
+</view>
