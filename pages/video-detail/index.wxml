@@ -1,4 +1,7 @@
-<view class="video-detail">
+<view class="video-detail" 
+  bindtouchstart="handleTouchStart" 
+  bindtouchmove="handleTouchMove" 
+  bindtouchend="handleTouchEnd">
   <!-- 视频播放区域 -->
   <video 
     id="myVideo"
@@ -131,5 +134,17 @@
         <view class="send-btn {{commentText ? 'active' : ''}}" bindtap="submitComment">发送</view>
       </view>
     </view>
+  </view>
+  
+  <!-- 视频切换提示 -->
+  <view class="switch-tips {{direction === 'up' ? 'up' : direction === 'down' ? 'down' : ''}}">
+    <view class="switch-icon {{direction === 'up' ? 'up' : 'down'}}"></view>
+    <view class="switch-text">{{direction === 'up' ? '上滑切换下一个' : direction === 'down' ? '下滑切换上一个' : ''}}</view>
+  </view>
+  
+  <!-- 加载提示 -->
+  <view class="loading-more" wx:if="{{isLoadingMore}}">
+    <view class="loading-spinner"></view>
+    <view class="loading-text">加载中...</view>
   </view>
 </view> 

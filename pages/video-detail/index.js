@@ -44,6 +44,8 @@ function formatCommentTime(dateString) {
   return `${year}-${month}-${day}`;
 }
 
+const Bmob = require('../../utils/Bmob-2.5.30.min.js');
+
 Page({
   data: {
     note: null,
@@ -63,7 +65,20 @@ Page({
     page: 1,
     pageSize: 20,
     hasMore: true,
-    isLoading: false
+    isLoading: false,
+    // 视频列表相关
+    videoList: [],
+    currentVideoIndex: 0,
+    viewedVideoIds: [], // 记录已浏览过的视频ID
+    isLoadingMore: false,
+    videoPage: 1,
+    videoPageSize: 10,
+    hasMoreVideos: true,
+    startY: 0,
+    moveY: 0,
+    direction: '', // 滑动方向：'up' 或 'down'
+    touchStartTime: 0,
+    isSwitching: false // 是否正在切换视频
   },
 
   onLoad(options) {
@@ -82,7 +97,12 @@ Page({
       pageSize: 10,
       hasMore: true,
       isRefreshing: false,
-      isLoading: false
+      isLoading: false,
+      viewedVideoIds: [], // 初始化已浏览视频ID数组
+      videoPage: 1,
+      videoPageSize: 10,
+      hasMoreVideos: true,
+      isLoadingMore: false
     });
 
     // 获取视频实例
@@ -91,6 +111,12 @@ Page({
     // 加载笔记数据
     if (options.id) {
       this.loadNoteData(options.id);
+      // 将当前视频ID添加到已浏览列表
+      this.setData({
+        viewedVideoIds: [options.id]
+      });
+      // 加载视频列表
+      this.loadVideoList();
     }
 
     this.checkFollowStatus();
@@ -153,51 +179,56 @@ Page({
 
   // 加载笔记数据
   async loadNoteData(id) {
-    try {
-      wx.showLoading({ title: '加载中' });
-      
-      const query = wx.Bmob.Query('note');
-      query.include('author');
-      const note = await query.get(id);
-      
-      if (!note) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        wx.showLoading({ title: '加载中' });
+        
+        const query = wx.Bmob.Query('note');
+        query.include('author');
+        const note = await query.get(id);
+        
+        if (!note) {
+          wx.showToast({
+            title: '笔记不存在',
+            icon: 'none'
+          });
+          reject(new Error('笔记不存在'));
+          return;
+        }
+        
+        // 格式化笔记数据
+        const formattedNote = {
+          objectId: note.objectId,
+          content: note.content || '',
+          video: note.video || '',
+          likeCount: note.likeCount || 0,
+          commentCount: note.commentCount || 0,
+          shareCount: note.shareCount || 0,
+          author: {
+            objectId: note.author ? note.author.objectId : '',
+            nickname: note.author ? note.author.nickname || '匿名用户' : '匿名用户',
+            avatar: note.author ? note.author.avatar || '' : '',
+            signature: note.author ? note.author.signature || '' : ''
+          }
+        };
+        
+        this.setData({ note: formattedNote });
+        
+        // 加载评论
+        this.loadComments();
+        
+        wx.hideLoading();
+        resolve(formattedNote);
+      } catch (error) {
+        console.error('加载笔记失败:', error);
+        wx.hideLoading();
         wx.showToast({
-          title: '笔记不存在',
+          title: '加载失败',
           icon: 'none'
         });
-        return;
+        reject(error);
       }
-      
-      // 格式化笔记数据
-      const formattedNote = {
-        objectId: note.objectId,
-        content: note.content || '',
-        video: note.video || '',
-        likeCount: note.likeCount || 0,
-        commentCount: note.commentCount || 0,
-        shareCount: note.shareCount || 0,
-        author: {
-          objectId: note.author ? note.author.objectId : '',
-          nickname: note.author ? note.author.nickname || '匿名用户' : '匿名用户',
-          avatar: note.author ? note.author.avatar || '' : '',
-          signature: note.author ? note.author.signature || '' : ''
-        }
-      };
-      
-      this.setData({ note: formattedNote });
-      
-      // 加载评论
-      this.loadComments();
-      
-      wx.hideLoading();
-    } catch (error) {
-      console.error('加载笔记失败:', error);
-      wx.hideLoading();
-      wx.showToast({
-        title: '加载失败',
-        icon: 'none'
-      });
-    }
+    });
   },
 
   // 检查关注状态
@@ -524,5 +555,215 @@ Page({
       this.setData({ progress });
       this.videoContext.seek(currentTime);
     }).exec();
+  },
+
+  // 加载视频列表
+  async loadVideoList(isRefresh = false) {
+    if (this.data.isLoadingMore || (!this.data.hasMoreVideos && !isRefresh)) {
+      return;
+    }
+
+    this.setData({
+      isLoadingMore: true
+    });
+
+    const page = isRefresh ? 1 : this.data.videoPage;
+    
+    try {
+      const query = Bmob.Query('note');
+      // 只查询有视频的笔记
+      query.equalTo("video", "!=", "");
+      // 排除已浏览过的视频
+      if (this.data.viewedVideoIds.length > 0) {
+        query.equalTo('objectId', "!=",this.data.viewedVideoIds);
+      }
+      query.order('-createdAt');
+      query.limit(this.data.videoPageSize);
+      query.skip((page - 1) * this.data.videoPageSize);
+      query.include('author');
+      // console.log('查询视频列表:', query.toJSON());
+      const result = await query.find();
+      console.log('查询视频列表结果:', result);
+      
+      // 处理视频数据
+      const videoList = result.map(note => {
+        return {
+          ...note,
+          createTime: formatTime(note.createdAt)
+        };
+      });
+      
+      if (isRefresh) {
+        this.setData({
+          videoList,
+          videoPage: 2,
+          hasMoreVideos: videoList.length === this.data.videoPageSize
+        });
+      } else {
+        this.setData({
+          videoList: [...this.data.videoList, ...videoList],
+          videoPage: page + 1,
+          hasMoreVideos: videoList.length === this.data.videoPageSize
+        });
+      }
+    } catch (error) {
+      console.error('加载视频列表失败:', error);
+      wx.showToast({
+        title: '加载视频失败',
+        icon: 'none'
+      });
+    } finally {
+      this.setData({
+        isLoadingMore: false
+      });
+    }
+  },
+
+  // 处理触摸开始事件
+  handleTouchStart(e) {
+    this.setData({
+      startY: e.touches[0].clientY,
+      touchStartTime: Date.now(),
+      direction: ''
+    });
+  },
+
+  // 处理触摸移动事件
+  handleTouchMove(e) {
+    if (this.data.isSwitching) return;
+    
+    const moveY = e.touches[0].clientY;
+    const diffY = moveY - this.data.startY;
+    
+    // 判断滑动方向
+    const direction = diffY < 0 ? 'up' : 'down';
+    
+    this.setData({
+      moveY,
+      direction
+    });
+  },
+
+  // 处理触摸结束事件
+  handleTouchEnd(e) {
+    if (this.data.isSwitching) return;
+    
+    const endTime = Date.now();
+    const touchDuration = endTime - this.data.touchStartTime;
+    const diffY = this.data.moveY - this.data.startY;
+    const absY = Math.abs(diffY);
+    
+    // 判断是否为有效的滑动手势（滑动距离足够大且速度足够快）
+    if (absY > 50 && touchDuration < 300) {
+      if (diffY < 0) { // 上滑
+        this.switchToNextVideo();
+      } else { // 下滑
+        this.switchToPrevVideo();
+      }
+    }
+  },
+
+  // 切换到下一个视频
+  switchToNextVideo() {
+    if (this.data.isSwitching) return;
+    
+    // 检查是否有下一个视频
+    if (this.data.currentVideoIndex < this.data.videoList.length - 1) {
+      this.switchVideo(this.data.currentVideoIndex + 1);
+    } else {
+      // 如果已经是最后一个视频，加载更多
+      if (this.data.hasMoreVideos && !this.data.isLoadingMore) {
+        this.setData({
+          isSwitching: true
+        });
+        
+        wx.showLoading({
+          title: '加载中...',
+        });
+        
+        this.loadVideoList().then(() => {
+          // 加载完成后，如果有新视频，切换到下一个
+          if (this.data.currentVideoIndex < this.data.videoList.length - 1) {
+            this.switchVideo(this.data.currentVideoIndex + 1);
+          } else {
+            wx.showToast({
+              title: '没有更多视频了',
+              icon: 'none'
+            });
+            this.setData({
+              isSwitching: false
+            });
+          }
+          wx.hideLoading();
+        });
+      } else {
+        wx.showToast({
+          title: '没有更多视频了',
+          icon: 'none'
+        });
+      }
+    }
+  },
+
+  // 切换到上一个视频
+  switchToPrevVideo() {
+    if (this.data.isSwitching) return;
+    
+    // 检查是否有上一个视频
+    if (this.data.currentVideoIndex > 0) {
+      this.switchVideo(this.data.currentVideoIndex - 1);
+    } else {
+      wx.showToast({
+        title: '已经是第一个视频',
+        icon: 'none'
+      });
+    }
+  },
+
+  // 切换到指定索引的视频
+  switchVideo(index) {
+    if (this.data.isSwitching) return;
+    
+    this.setData({
+      isSwitching: true
+    });
+    
+    // 暂停当前视频
+    if (this.videoContext) {
+      this.videoContext.pause();
+    }
+    
+    const targetVideo = this.data.videoList[index];
+    if (!targetVideo) {
+      this.setData({
+        isSwitching: false
+      });
+      return;
+    }
+    
+    // 更新当前视频索引
+    this.setData({
+      currentVideoIndex: index
+    });
+    
+    // 加载新视频数据
+    this.loadNoteData(targetVideo.objectId).then(() => {
+      // 将新视频ID添加到已浏览列表
+      const viewedVideoIds = [...this.data.viewedVideoIds];
+      if (!viewedVideoIds.includes(targetVideo.objectId)) {
+        viewedVideoIds.push(targetVideo.objectId);
+      }
+      
+      this.setData({
+        viewedVideoIds,
+        isSwitching: false,
+        progress: 0,
+        isExpanded: false
+      });
+      
+      // 播放新视频
+      this.videoContext = wx.createVideoContext('myVideo');
+      this.videoContext.play();
+    });
   }
 }); 
