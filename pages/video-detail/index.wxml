@@ -96,6 +96,8 @@
         refresher-enabled="{{true}}"
         refresher-triggered="{{isRefreshing}}"
         bindrefresherrefresh="onRefresh"
+        bindscrolltolower="onLoadMore"
+        lower-threshold="50"
       >
         <view class="comment-item" wx:for="{{comments}}" wx:key="objectId">
           <view class="comment-user">
@@ -106,6 +108,15 @@
             </view>
           </view>
           <view class="comment-content">{{item.content}}</view>
+        </view>
+        <!-- 加载状态提示 -->
+        <view class="loading-tips" wx:if="{{comments.length > 0}}">
+          <view wx:if="{{isLoading && hasMore}}" class="loading">加载中...</view>
+          <view wx:if="{{!hasMore}}" class="no-more">没有更多评论了</view>
+        </view>
+        <!-- 无评论提示 -->
+        <view class="empty-tips" wx:if="{{comments.length === 0 && !isLoading}}">
+          暂无评论，快来抢沙发吧~
         </view>
       </scroll-view>
       <view class="comment-input-area">

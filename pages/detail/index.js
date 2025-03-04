@@ -1,5 +1,27 @@
 // pages/detail/index.js
 const app = getApp()
+const Bmob = app.globalData.Bmob
+
+// 格式化评论时间
+function formatCommentTime(dateString) {
+  if (!dateString) return '';
+  
+  const date = new Date(dateString);
+  const month = (date.getMonth() + 1).toString().padStart(2, '0');
+  const day = date.getDate().toString().padStart(2, '0');
+  
+  // 获取当前日期
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const commentYear = date.getFullYear();
+  
+  // 如果是当年的评论，只显示月-日，否则显示年-月-日
+  if (commentYear === currentYear) {
+    return `${month}-${day}`;
+  } else {
+    return `${commentYear}-${month}-${day}`;
+  }
+}
 
 Page({
   data: {
@@ -21,12 +43,16 @@ Page({
       }
     },
     comments: [],
+    commentText: '',
     isFollowing: false,
     isLiked: false,
     isFavorited: false,
     currentPage: 1,
     pageSize: 10,
-    hasMore: true
+    hasMore: true,
+    isLoading: false,
+    isRefreshing: false,
+    focusComment: false
   },
 
   onLoad: function(options) {
@@ -36,8 +62,8 @@ Page({
       'noteData.objectId': noteId
     })
     this.fetchNoteDetail()
-    this.fetchComments()
     this.checkUserInteraction()
+    this.fetchComments(true) // 初始加载评论
   },
 
   // 获取笔记详情
@@ -152,45 +178,176 @@ Page({
     }
   },
 
+  // 处理评论按钮点击
+  handleComment() {
+    // 检查是否登录
+    const current = wx.Bmob.User.current()
+    if (!current) {
+      wx.navigateTo({
+        url: '/pages/login/index',
+      })
+      return
+    }
+    
+    // 设置焦点到评论框并滚动到页面底部
+    wx.pageScrollTo({
+      selector: '.comment-input',
+      duration: 300
+    })
+    
+    this.setData({
+      focusComment: true
+    })
+  },
+
+  // 下拉刷新评论
+  onRefresh() {
+    this.setData({ 
+      isRefreshing: true,
+      comments: [],
+      currentPage: 1,
+      hasMore: true
+    })
+    this.fetchComments(true)
+  },
+
   // 获取评论列表
-  async fetchComments() {
-    if (!this.data.hasMore) return
+  async fetchComments(isRefresh = false) {
+    if ((!this.data.hasMore && !isRefresh) || this.data.isLoading) return
+    
+    this.setData({ isLoading: true })
     
     try {
       const query = new wx.Bmob.Query('comment')
       const notePointer = wx.Bmob.Pointer('note')
       const noteObject = notePointer.set(this.data.noteData.objectId)
       query.equalTo('note', "==", noteObject)
-      query.equalTo('status', 1) // 只查询已发布的评论
-      query.equalTo('level', 1) // 只查询一级评论
+      query.equalTo('status', "==", 1) // 只查询已发布的评论
+      query.equalTo('level', "==", 1) // 只查询一级评论
       query.limit(this.data.pageSize)
       query.skip((this.data.currentPage - 1) * this.data.pageSize)
-      query.include('author') // 关联查询评论作者信息
-      query.descending('createdAt')
+      query.include('user', 'author') // 关联查询评论作者信息
+      query.order('-createdAt')
       
       const comments = await query.find()
       
       // 处理评论数据
-      const formattedComments = comments.map(comment => ({
-        id: comment.objectId,
-        content: comment.content,
-        createTime: comment.createdAt.split(' ')[0],
-        likeCount: comment.likeCount || 0,
-        userInfo: {
-          objectId: comment.author.objectId,
-          avatar: comment.author.avatar,
-          nickname: comment.author.nickname
+      const formattedComments = comments.map(comment => {
+        // 优先使用author字段，如果不存在则使用user字段
+        const userInfo = comment.author || comment.user || {};
+        
+        // 随机生成地区信息，模拟小红书评论样式
+        const locations = ['上海', '北京', '广州', '深圳', '杭州', '成都', '重庆', '南京', '武汉', '西安', '天津', '苏州', '厦门', '长沙', '青岛'];
+        const randomLocation = locations[Math.floor(Math.random() * locations.length)];
+        
+        return {
+          id: comment.objectId,
+          content: comment.content,
+          createTime: formatCommentTime(comment.createdAt) + ' ' + randomLocation,
+          likeCount: comment.likeCount || 0,
+          userInfo: {
+            objectId: userInfo.objectId || '',
+            avatar: userInfo.avatar || '',
+            nickname: userInfo.nickname || '用户' + comment.objectId.substr(0, 4)
+          }
         }
-      }))
+      })
       
       this.setData({
-        comments: [...this.data.comments, ...formattedComments],
+        comments: isRefresh ? formattedComments : [...this.data.comments, ...formattedComments],
         currentPage: this.data.currentPage + 1,
-        hasMore: comments.length === this.data.pageSize
+        hasMore: comments.length === this.data.pageSize,
+        isLoading: false,
+        isRefreshing: false
       })
     } catch (error) {
+      console.error('获取评论失败:', error)
+      this.setData({ 
+        isLoading: false,
+        isRefreshing: false
+      })
       wx.showToast({
         title: '获取评论失败',
+        icon: 'none'
+      })
+    }
+  },
+
+  // 加载更多评论
+  loadMoreComments() {
+    if (this.data.hasMore && !this.data.isLoading) {
+      this.fetchComments()
+    }
+  },
+
+  // 监听评论输入
+  onCommentInput(e) {
+    this.setData({
+      commentText: e.detail.value
+    })
+  },
+
+  // 提交评论
+  async submitComment() {
+    if (!this.data.commentText.trim()) {
+      wx.showToast({
+        title: '请输入评论内容',
+        icon: 'none'
+      })
+      return
+    }
+
+    const current = wx.Bmob.User.current()
+    if (!current) {
+      wx.navigateTo({
+        url: '/pages/login/index'
+      })
+      return
+    }
+
+    try {
+      // 创建评论
+      const comment = wx.Bmob.Query('comment')
+      const notePointer = wx.Bmob.Pointer('note')
+      const userPointer = wx.Bmob.Pointer('_User')
+      
+      comment.set('content', this.data.commentText.trim())
+      comment.set('note', notePointer.set(this.data.noteData.objectId))
+      comment.set('user', userPointer.set(current.objectId))
+      comment.set('author', userPointer.set(current.objectId)) // 添加author字段
+      comment.set('status', 1) // 1表示正常状态
+      comment.set('level', 1)  // 1级评论
+      
+      const result = await comment.save()
+      console.log('评论保存成功:', result)
+
+      // 更新笔记评论数
+      const noteQuery = wx.Bmob.Query('note')
+      const note = await noteQuery.get(this.data.noteData.objectId)
+      note.increment('commentCount')
+      await note.save()
+      
+      // 更新本地评论数
+      this.setData({
+        'noteData.commentCount': (this.data.noteData.commentCount || 0) + 1,
+        commentText: '',
+        focusComment: false, // 取消输入框焦点
+        comments: [], // 清空评论列表
+        currentPage: 1, // 重置页码
+        hasMore: true // 重置加载状态
+      })
+
+      // 重新加载评论列表
+      this.fetchComments()
+
+      wx.showToast({
+        title: '评论成功',
+        icon: 'success'
+      })
+    } catch (error) {
+      console.error('提交评论失败:', error)
+      wx.showToast({
+        title: '评论失败，请重试',
         icon: 'none'
       })
     }
@@ -244,21 +401,6 @@ Page({
     this.setData({
       isFavorited: e.detail.isFavorited,
       'noteData.favoriteCount': e.detail.favoriteCount
-    })
-  },
-
-  // 处理评论事件
-  handleComment() {
-    if (!wx.Bmob.User.current()) {
-      wx.navigateTo({
-        url: '/pages/login/index'
-      })
-      return
-    }
-
-    wx.showToast({
-      title: '评论功能开发中',
-      icon: 'none'
     })
   },
 

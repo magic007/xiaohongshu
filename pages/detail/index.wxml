@@ -39,24 +39,75 @@
     <view class="publish-info">
       <text class="time">{{noteData.createTime}} {{noteData.location ? '·' : ''}} 广东</text>
     </view>
-
-    <!-- 评论数量提示 -->
-    <view class="comment-count" wx:if="{{noteData.commentCount > 0}}">
-      <text>共 {{noteData.commentCount}}+ 条评论</text>
-    </view>
   </view>
 
-  <!-- 底部操作栏 -->
-  <action-bar 
-    noteId="{{noteData.objectId}}"
-    isLiked="{{isLiked}}"
-    isFavorited="{{isFavorited}}"
-    likeCount="{{noteData.likeCount}}"
-    favoriteCount="{{noteData.favoriteCount}}"
-    commentCount="{{noteData.commentCount}}"
-    bind:like="handleLike"
-    bind:favorite="handleFavorite"
-    bind:comment="handleComment"
-    bind:share="handleShare"
-  />
+  <!-- 评论区域 -->
+  <view class="comment-section">
+    <!-- 评论标题 -->
+    <view class="comment-header">
+      <text class="comment-title">共 {{noteData.commentCount || 0}} 条评论</text>
+    </view>
+
+    <!-- 评论列表 -->
+    <view class="comment-list">
+      <view class="comment-item" wx:for="{{comments}}" wx:key="id">
+        <view class="comment-user-avatar">
+          <view class="{{item.userInfo.avatar ? 'user-avatar' : 'user-avatar avatar-gradient'}}">
+            <image wx:if="{{item.userInfo.avatar}}" src="{{item.userInfo.avatar}}" mode="aspectFill"/>
+          </view>
+        </view>
+        <view class="comment-content-wrapper">
+          <view class="comment-user-info">
+            <text class="user-name">{{item.userInfo.nickname}}</text>
+            <text class="comment-time">{{item.createTime}}</text>
+          </view>
+          <view class="comment-text">{{item.content}}</view>
+        </view>
+      </view>
+      
+      <!-- 加载状态提示 -->
+      <view class="loading-tips" wx:if="{{comments.length > 0}}">
+        <view wx:if="{{isLoading && hasMore}}" class="loading">加载中...</view>
+        <view wx:if="{{!hasMore}}" class="no-more">没有更多评论了</view>
+      </view>
+      
+      <!-- 无评论提示 -->
+      <view class="empty-tips" wx:if="{{comments.length === 0 && !isLoading}}">
+        暂无评论，快来抢沙发吧~
+      </view>
+      
+      <!-- 加载更多按钮 -->
+      <view class="load-more-btn" bindtap="loadMoreComments" wx:if="{{hasMore && !isLoading && comments.length > 0}}">
+        查看更多评论
+      </view>
+    </view>
+    
+    <!-- 评论输入框 -->
+    <view class="comment-input-wrapper">
+      <input 
+        class="comment-input" 
+        placeholder="说点什么..." 
+        value="{{commentText}}"
+        bindinput="onCommentInput"
+        bindconfirm="submitComment"
+        confirm-type="send"
+        focus="{{focusComment}}"
+      />
+      <view class="send-btn {{commentText ? 'active' : ''}}" bindtap="submitComment">发送</view>
+    </view>
+  </view>
 </view>
+
+<!-- 底部操作栏 -->
+<action-bar 
+  noteId="{{noteData.objectId}}"
+  isLiked="{{isLiked}}"
+  isFavorited="{{isFavorited}}"
+  likeCount="{{noteData.likeCount}}"
+  favoriteCount="{{noteData.favoriteCount}}"
+  commentCount="{{noteData.commentCount}}"
+  bind:like="handleLike"
+  bind:favorite="handleFavorite"
+  bind:comment="handleComment"
+  bind:share="handleShare"
+/>

@@ -453,4 +453,29 @@
 .send-btn.active {
   background: linear-gradient(120deg, #e0c3fc 0%, #8ec5fc 100%);
   color: #fff;
+}
+
+/* 加载状态提示样式 */
+.loading-tips {
+  padding: 20rpx 0;
+  text-align: center;
+  color: #999;
+  font-size: 24rpx;
+}
+
+.loading-tips .loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.loading-tips .no-more {
+  color: #999;
+}
+
+.empty-tips {
+  padding: 60rpx 0;
+  text-align: center;
+  color: #999;
+  font-size: 28rpx;
 } 
