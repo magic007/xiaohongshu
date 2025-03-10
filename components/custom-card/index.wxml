@@ -2,4 +2,10 @@
 <view class="card">
   <view class="card-title" bindtap="toggleContent">{{title}}</view>
   <view class="card-content" wx:if="{{showContent}}">{{content}}</view>
+  <view class="card-footer">
+    <view class="like-container">
+      <image class="like-icon" src="/images/like-count.png"></image>
+      <text class="like-count">{{likeCount}}</text>
+    </view>
+  </view>
 </view>

@@ -153,14 +153,38 @@ Page({
                 url: fileUrl,
                 method: 'HEAD',
                 success: () => {
-                  resolve({
-                    url: fileUrl,
-                    type: 'video',
-                    duration: file.duration,
-                    thumbUrl: file.thumbTempFilePath,
-                    size: file.size,
-                    width: file.width,
-                    height: file.height
+                  // 生成视频封面图
+                  const snapshotFileName = `snapshot_${Date.now()}.jpg`;
+                  const snapshotUrl = `https://bmob-cdn-31541.bmobpay.com/cdnVedioSnapshot/${snapshotFileName}`;
+                  
+                  // 调用云函数生成视频截图
+                  wx.Bmob.functions('cdnVedioSnapshot', {
+                    source: fileUrl,
+                    save_as: snapshotUrl,
+                    point: '00:00:03'
+                  }).then(snapshotRes => {
+                    console.log('视频截图生成成功：', snapshotRes);
+                    resolve({
+                      url: fileUrl,
+                      type: 'video',
+                      duration: file.duration,
+                      thumbUrl: snapshotRes.save_as || file.thumbTempFilePath,
+                      size: file.size,
+                      width: file.width,
+                      height: file.height
+                    });
+                  }).catch(snapshotErr => {
+                    console.error('视频截图生成失败：', snapshotErr);
+                    // 截图失败时使用默认缩略图
+                    resolve({
+                      url: fileUrl,
+                      type: 'video',
+                      duration: file.duration,
+                      thumbUrl: file.thumbTempFilePath,
+                      size: file.size,
+                      width: file.width,
+                      height: file.height
+                    });
                   });
                 },
                 fail: (error) => {
@@ -378,9 +402,21 @@ Page({
       const videoInfo = videos[0]; // 只取第一个视频
       Note.set('video', videoInfo.url); // 设置单个视频URL
       Note.set('videos', [videoInfo]); // 保存完整视频信息到数组
+      
+      // 如果有视频缩略图，将其添加到images数组中作为封面图
+      if (videoInfo.thumbUrl && videoInfo.thumbUrl.trim() !== '') {
+        // 确保images数组中不重复添加相同的缩略图
+        if (!images.includes(videoInfo.thumbUrl)) {
+          Note.set('coverImage', videoInfo.thumbUrl); // 设置封面图
+        }
+      }
     } else {
       Note.set('video', '');
       Note.set('videos', []);
+      // 如果有图片，将第一张图片设为封面图
+      if (images.length > 0) {
+        Note.set('coverImage', images[0]);
+      }
     }
     
     // 设置分类

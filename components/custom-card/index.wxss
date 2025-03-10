@@ -19,3 +19,25 @@
   color: #666;
   line-height: 1.5;
 }
+
+.card-footer {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 15px;
+}
+
+.like-container {
+  display: flex;
+  align-items: center;
+}
+
+.like-icon {
+  width: 20px;
+  height: 20px;
+}
+
+.like-count {
+  margin-left: 5px;
+  font-size: 14px;
+  color: #666;
+}

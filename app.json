@@ -13,7 +13,7 @@
   ],
   "window": {
     "navigationBarTextStyle": "black",
-    "navigationBarTitleText": "学生评语大全",
+    "navigationBarTitleText": "小红书社区",
     "navigationBarBackgroundColor": "#ffffff"
   },
   "tabBar": {
@@ -25,6 +25,11 @@
         "pagePath": "pages/index/index",
         "iconPath": "assets/images/home.png",
         "selectedIconPath": "assets/images/home_selected.png"
+      },
+      {
+        "pagePath": "pages/publish/publish",
+        "iconPath": "assets/images/add.png",
+        "selectedIconPath": "assets/images/add_selected.png"
       },
       {
         "pagePath": "pages/profile/index",

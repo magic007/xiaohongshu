@@ -1,5 +1,5 @@
 <view class="note-card" bindtap="onTapCard">
-  <view class="note-image" style="background: {{gradientBg}}">
+  <view class="note-image" style="background: {{note.coverImage ? 'url(' + note.coverImage + ')' : (note.images && note.images.length > 0 ? 'url(' + note.images[0] + ')' : gradientBg)}}">
     <view class="video-icon" wx:if="{{note.video}}">
       <view class="icon-inner"></view>
     </view>
@@ -7,10 +7,10 @@
   <view class="note-content">
     <view class="note-title">{{note.title}}</view>
     <view class="note-author">
-      <view class="author-avatar" style="background: {{gradientBg}}"></view>
+      <image class="author-avatar" src="{{note.author.avatar}}" mode="aspectFill"></image>
       <text class="author-name">{{note.author.nickname || note.author}}</text>
       <view class="like-count" catchtap="onTapLike">
-        <text class="count">{{note.likes}}</text>
+        <text class="count">{{note.likes}}+</text>
       </view>
     </view>
   </view>

@@ -1,4 +1,9 @@
 <view class="profile-container">
+  <!-- 自定义导航栏 -->
+  <view class="custom-nav" style="height:{{statusBarHeight}}px;">
+  </view>
+  <view style="height:44px; background: rgb(43, 61, 87);"></view>
+
   <!-- 顶部背景 -->
   <view class="profile-header">
     <!-- 用户信息 -->
@@ -42,55 +47,93 @@
       <view class="tab-item {{currentTab === 1 ? 'active' : ''}}" bindtap="switchTab" data-index="1">收藏</view>
       <view class="tab-item {{currentTab === 2 ? 'active' : ''}}" bindtap="switchTab" data-index="2">赞过</view>
     </view>
-    <view class="tab-line" style="left: {{currentTab * 33.33}}%"></view>
   </view>
 
   <!-- 内容区域 -->
   <scroll-view scroll-y class="content-area">
     <!-- 笔记列表 -->
     <view class="content-list" wx:if="{{currentTab == 0}}">
-      <view class="grid-container" wx:if="{{noteList.length > 0}}">
-        <note-card 
-          wx:for="{{noteList}}" 
-          wx:key="id"
-          note="{{item}}"
-          type="{{item.type}}"
-          bindtap="onTapNote"
-          data-note="{{item}}"
-          bind:like="onLikeNote"
-        />
+      <view class="waterfall" wx:if="{{noteList.length > 0}}">
+        <view class="waterfall-column">
+          <view wx:for="{{noteList}}" wx:key="id" wx:if="{{index % 2 === 0}}" class="waterfall-item">
+            <note-card 
+              note="{{item}}"
+              type="{{item.type}}"
+              bindtap="onTapNote"
+              data-note="{{item}}"
+              bind:like="onLikeNote"
+            />
+          </view>
+        </view>
+        <view class="waterfall-column">
+          <view wx:for="{{noteList}}" wx:key="id" wx:if="{{index % 2 === 1}}" class="waterfall-item">
+            <note-card 
+              note="{{item}}"
+              type="{{item.type}}"
+              bindtap="onTapNote"
+              data-note="{{item}}"
+              bind:like="onLikeNote"
+            />
+          </view>
+        </view>
       </view>
       <view class="empty-tip" wx:else>还没有笔记哦</view>
     </view>
 
     <!-- 收藏列表 -->
     <view class="content-list" wx:if="{{currentTab == 1}}">
-      <view class="grid-container" wx:if="{{collectionList.length > 0}}">
-        <note-card 
-          wx:for="{{collectionList}}" 
-          wx:key="id"
-          note="{{item}}"
-          type="{{item.type}}"
-          bindtap="onTapNote"
-          data-note="{{item}}"
-          bind:like="onLikeNote"
-        />
+      <view class="waterfall" wx:if="{{collectionList.length > 0}}">
+        <view class="waterfall-column">
+          <view wx:for="{{collectionList}}" wx:key="id" wx:if="{{index % 2 === 0}}" class="waterfall-item">
+            <note-card 
+              note="{{item}}"
+              type="{{item.type}}"
+              bindtap="onTapNote"
+              data-note="{{item}}"
+              bind:like="onLikeNote"
+            />
+          </view>
+        </view>
+        <view class="waterfall-column">
+          <view wx:for="{{collectionList}}" wx:key="id" wx:if="{{index % 2 === 1}}" class="waterfall-item">
+            <note-card 
+              note="{{item}}"
+              type="{{item.type}}"
+              bindtap="onTapNote"
+              data-note="{{item}}"
+              bind:like="onLikeNote"
+            />
+          </view>
+        </view>
       </view>
       <view class="empty-tip" wx:else>还没有收藏的笔记</view>
     </view>
 
     <!-- 赞过列表 -->
     <view class="content-list" wx:if="{{currentTab == 2}}">
-      <view class="grid-container" wx:if="{{likedList.length > 0}}">
-        <note-card 
-          wx:for="{{likedList}}" 
-          wx:key="id"
-          note="{{item}}"
-          type="{{item.type}}"
-          bindtap="onTapNote"
-          data-note="{{item}}"
-          bind:like="onLikeNote"
-        />
+      <view class="waterfall" wx:if="{{likedList.length > 0}}">
+        <view class="waterfall-column">
+          <view wx:for="{{likedList}}" wx:key="id" wx:if="{{index % 2 === 0}}" class="waterfall-item">
+            <note-card 
+              note="{{item}}"
+              type="{{item.type}}"
+              bindtap="onTapNote"
+              data-note="{{item}}"
+              bind:like="onLikeNote"
+            />
+          </view>
+        </view>
+        <view class="waterfall-column">
+          <view wx:for="{{likedList}}" wx:key="id" wx:if="{{index % 2 === 1}}" class="waterfall-item">
+            <note-card 
+              note="{{item}}"
+              type="{{item.type}}"
+              bindtap="onTapNote"
+              data-note="{{item}}"
+              bind:like="onLikeNote"
+            />
+          </view>
+        </view>
       </view>
       <view class="empty-tip" wx:else>还没有赞过的笔记</view>
     </view>

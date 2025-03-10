@@ -2,26 +2,72 @@
   bindtouchstart="handleTouchStart" 
   bindtouchmove="handleTouchMove" 
   bindtouchend="handleTouchEnd">
-  <!-- 视频播放区域 -->
-  <video 
-    id="myVideo"
-    class="main-video" 
-    src="{{note.video}}"
-    object-fit="cover"
-    autoplay="{{true}}"
-    show-center-play-btn="{{true}}"
-    controls="{{false}}"
-    loop="{{true}}"
-    enable-progress-gesture="{{true}}"
-    initial-time="0"
-    bindplay="onVideoPlay"
-    bindpause="onVideoPause"
-    binderror="onVideoError"
-    bindtimeupdate="onTimeUpdate"
-    show-fullscreen-btn="{{false}}"
-    custom-cache="{{false}}"
-    bindtap="togglePlay"
-  ></video>
+  <!-- 视频播放区域 - 使用三个视频容器实现无缝切换 -->
+  <view class="video-container-wrapper">
+    <view class="video-container" style="{{videoContainerStyle}}">
+      <!-- 上一个视频（预加载） -->
+      <view class="video-item">
+        <video 
+          id="prevVideo"
+          class="main-video {{prevVideoVisible ? 'visible' : 'hidden'}}" 
+          src="{{prevVideo.video}}"
+          object-fit="cover"
+          autoplay="{{false}}"
+          show-center-play-btn="{{false}}"
+          controls="{{false}}"
+          loop="{{true}}"
+          enable-progress-gesture="{{false}}"
+          initial-time="0"
+          show-fullscreen-btn="{{false}}"
+          custom-cache="{{false}}"
+        ></video>
+      </view>
+      
+      <!-- 当前视频 -->
+      <view class="video-item current">
+        <video 
+          id="currentVideo"
+          class="main-video {{currentVideoVisible ? 'visible' : 'hidden'}}" 
+          src="{{note.video}}"
+          object-fit="cover"
+          autoplay="{{true}}"
+          show-center-play-btn="{{true}}"
+          controls="{{false}}"
+          loop="{{true}}"
+          enable-progress-gesture="{{false}}"
+          initial-time="0"
+          bindplay="onVideoPlay"
+          bindpause="onVideoPause"
+          binderror="onVideoError"
+          bindtimeupdate="onTimeUpdate"
+          show-fullscreen-btn="{{false}}"
+          custom-cache="{{false}}"
+          bindtap="togglePlay"
+        ></video>
+      </view>
+      
+      <!-- 下一个视频（预加载） -->
+      <view class="video-item">
+        <video 
+          id="nextVideo"
+          class="main-video {{nextVideoVisible ? 'visible' : 'hidden'}}" 
+          src="{{nextVideo.video}}"
+          object-fit="cover"
+          autoplay="{{false}}"
+          show-center-play-btn="{{false}}"
+          controls="{{false}}"
+          loop="{{true}}"
+          enable-progress-gesture="{{false}}"
+          initial-time="0"
+          show-fullscreen-btn="{{false}}"
+          custom-cache="{{false}}"
+        ></video>
+      </view>
+    </view>
+  </view>
+
+  <!-- 视频阴影层 - 增加过渡效果 -->
+  <view class="video-shadow {{direction ? 'active' : ''}}"></view>
 
   <!-- 进度条 -->
   <view class="progress-bar" 
@@ -42,7 +88,7 @@
   </view>
 
   <!-- 内容区域 -->
-  <view class="content-container">
+  <view class="content-container {{direction ? 'fade' : ''}}">
     <!-- 作者信息 -->
     <view class="author-info">
       <view class="author-avatar" style="background: {{gradientBg}}"></view>
@@ -81,6 +127,7 @@
     bind:comment="handleComment"
     bind:favorite="handleFavorite"
     bind:share="handleShare"
+    class="{{direction ? 'fade' : ''}}"
   />
 
   <!-- 评论弹出层 -->
@@ -141,6 +188,9 @@
     <view class="switch-icon {{direction === 'up' ? 'up' : 'down'}}"></view>
     <view class="switch-text">{{direction === 'up' ? '上滑切换下一个' : direction === 'down' ? '下滑切换上一个' : ''}}</view>
   </view>
+  
+  <!-- 手势指示器 -->
+  <view class="gesture-indicator {{showGestureIndicator ? 'active' : ''}}"></view>
   
   <!-- 加载提示 -->
   <view class="loading-more" wx:if="{{isLoadingMore}}">

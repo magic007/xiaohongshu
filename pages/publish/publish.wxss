@@ -185,6 +185,7 @@ textarea {
   align-items: center;
   padding: 0 30rpx;
   border-top: 1rpx solid #eee;
+  margin-bottom: env(safe-area-inset-bottom);
 }
 
 .cancel-btn {

@@ -1,5 +1,6 @@
 Page({
   data: {
+    statusBarHeight: 0,
     currentTab: 0,
     userInfo: {
       avatar: '',
@@ -21,6 +22,12 @@ Page({
   },
 
   onLoad() {
+    // 获取状态栏高度
+    const systemInfo = wx.getSystemInfoSync();
+    this.setData({
+      statusBarHeight: systemInfo.statusBarHeight
+    });
+    
     this.getCurrentUser();
   },
 
@@ -90,6 +97,8 @@ Page({
         content: note.content,
         video: note.video || '',
         type: note.video ? 'video' : 'image',
+        images: note.images || [],
+        coverImage: note.coverImage || '',
         author: {
           avatar: note.author.avatar || '',
           nickname: note.author.nickname
@@ -120,6 +129,8 @@ Page({
           content: note.content,
           video: note.video || '',
           type: note.video ? 'video' : 'image',
+          images: note.images || [],
+          coverImage: note.coverImage || '',
           author: {
             avatar: note.author ? note.author.avatar || '' : '',
             nickname: note.author ? note.author.nickname || '未知用户' : '未知用户'
@@ -151,6 +162,8 @@ Page({
           content: note.content,
           video: note.video || '',
           type: note.video ? 'video' : 'image',
+          images: note.images || [],
+          coverImage: note.coverImage || '',
           author: {
             avatar: note.author ? note.author.avatar || '' : '',
             nickname: note.author ? note.author.nickname || '未知用户' : '未知用户'
@@ -167,8 +180,10 @@ Page({
   },
 
   switchTab(e) {
-    const index = e.currentTarget.dataset.index;
+    const index = parseInt(e.currentTarget.dataset.index);
     if (this.data.currentTab === index) return;
+    
+    // 使用动画效果切换标签页
     this.setData({
       currentTab: index
     });

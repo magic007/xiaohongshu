@@ -78,74 +78,112 @@ Page({
     moveY: 0,
     direction: '', // 滑动方向：'up' 或 'down'
     touchStartTime: 0,
-    isSwitching: false // 是否正在切换视频
+    isSwitching: false, // 是否正在切换视频
+    // 视频切换动画相关
+    nextVideo: null, // 预加载的下一个视频
+    prevVideo: null, // 预加载的上一个视频
+    currentVideoVisible: true, // 当前视频是否可见
+    nextVideoVisible: false, // 下一个视频是否可见
+    prevVideoVisible: false, // 上一个视频是否可见
+    transitionClass: '', // 过渡动画类名
+    animationTimer: null, // 动画定时器
+    // 新增动画相关数据
+    videoAnimationClass: '', // 当前视频动画类名
+    nextVideoAnimationClass: '', // 下一个视频动画类名
+    dragDistance: 0, // 拖动距离
+    dragThreshold: 150, // 触发切换的阈值
+    showGestureIndicator: false, // 是否显示手势指示器
+    touchActive: false, // 是否处于触摸状态
+    videoContainerStyle: '', // 视频容器样式
+    videoContainerHeight: 0, // 视频容器高度
   },
 
   onLoad(options) {
-    // 获取状态栏高度
+    // 获取系统信息
     const systemInfo = wx.getSystemInfoSync();
+    const videoContainerHeight = systemInfo.windowHeight;
+    
     this.setData({
+      videoContainerHeight,
       statusBarHeight: systemInfo.statusBarHeight,
-      gradientBg: 'linear-gradient(120deg, #e0c3fc 0%, #8ec5fc 100%)',
-      isPlaying: true,
-      progress: 0,
-      isExpanded: false,
-      showComment: false,
-      commentText: '',
-      comments: [],
-      page: 1,
-      pageSize: 10,
-      hasMore: true,
-      isRefreshing: false,
-      isLoading: false,
-      viewedVideoIds: [], // 初始化已浏览视频ID数组
+      // 其他初始化数据
+      noteId: options.id || '',
+      currentVideoIndex: 0,
+      videoList: [],
       videoPage: 1,
       videoPageSize: 10,
       hasMoreVideos: true,
-      isLoadingMore: false
+      viewedVideoIds: [],
+      isLoadingMore: false,
+      comments: [],
+      commentPage: 1,
+      commentPageSize: 10,
+      hasMore: true,
+      isLoading: false,
+      isRefreshing: false,
+      commentText: '',
+      showComment: false,
+      isPlaying: true,
+      progress: 0,
+      isExpanded: false,
+      isFollowing: false,
+      gradientBg: 'linear-gradient(120deg, #e0c3fc 0%, #8ec5fc 100%)',
+      isSwitching: false,
+      dragThreshold: 150,
+      showGestureIndicator: false,
+      touchActive: false
     });
-
-    // 获取视频实例
-    this.videoContext = wx.createVideoContext('myVideo');
-
+    
+    // 初始化视频上下文
+    this.currentVideoContext = null;
+    this.nextVideoContext = null;
+    this.prevVideoContext = null;
+    
     // 加载笔记数据
     if (options.id) {
-      this.loadNoteData(options.id);
-      // 将当前视频ID添加到已浏览列表
-      this.setData({
-        viewedVideoIds: [options.id]
+      wx.showLoading({
+        title: '加载中...',
       });
-      // 加载视频列表
-      this.loadVideoList();
+      this.loadNoteData(options.id);
+    } else {
+      // 如果没有指定ID，加载视频列表
+      this.loadVideoList(true).then(() => {
+        if (this.data.videoList.length > 0) {
+          const firstVideo = this.data.videoList[0];
+          this.loadNoteData(firstVideo.objectId);
+        }
+      });
     }
-
-    this.checkFollowStatus();
   },
 
   onReady() {
-    this.videoContext = wx.createVideoContext('myVideo');
+    this.currentVideoContext = wx.createVideoContext('currentVideo');
+    this.nextVideoContext = wx.createVideoContext('nextVideo');
   },
 
   onShow() {
     // 页面显示时自动播放视频
-    if (this.videoContext) {
-      this.videoContext.play();
+    if (this.currentVideoContext) {
+      this.currentVideoContext.play();
     }
   },
 
   onHide() {
     // 页面隐藏时暂停视频
-    if (this.videoContext) {
-      this.videoContext.pause();
+    if (this.currentVideoContext) {
+      this.currentVideoContext.pause();
+    }
+    if (this.nextVideoContext) {
+      this.nextVideoContext.pause();
     }
   },
 
   // 切换视频播放状态
   togglePlay() {
     if (this.data.isPlaying) {
-      this.videoContext.pause();
+      this.currentVideoContext.pause();
     } else {
-      this.videoContext.play();
+      this.currentVideoContext.play();
     }
     this.setData({
       isPlaying: !this.data.isPlaying
@@ -212,10 +250,17 @@ Page({
           }
         };
         
-        this.setData({ note: formattedNote });
+        this.setData({
+          note: formattedNote,
+          currentVideoVisible: true,
+          isPlaying: true
+        });
         
         // 加载评论
         this.loadComments();
+        
+        // 预加载上下个视频
+        this.preloadVideos();
         
         wx.hideLoading();
         resolve(formattedNote);
@@ -229,6 +274,56 @@ Page({
         reject(error);
       }
     });
+  },
+
+  // 预加载视频
+  preloadVideos() {
+    const { currentVideoIndex, videoList } = this.data;
+    
+    // 预加载下一个视频
+    if (currentVideoIndex < videoList.length - 1) {
+      const nextVideo = videoList[currentVideoIndex + 1];
+      this.setData({
+        nextVideo,
+        nextVideoVisible: true
+      });
+      
+      // 创建下一个视频的上下文
+      setTimeout(() => {
+        this.nextVideoContext = wx.createVideoContext('nextVideo');
+        // 预加载但不播放
+        this.nextVideoContext.play();
+        setTimeout(() => {
+          this.nextVideoContext.pause();
+          this.nextVideoContext.seek(0);
+        }, 500);
+      }, 100);
+    }
+    
+    // 预加载上一个视频
+    if (currentVideoIndex > 0) {
+      const prevVideo = videoList[currentVideoIndex - 1];
+      this.setData({
+        prevVideo,
+        prevVideoVisible: true
+      });
+      
+      // 创建上一个视频的上下文
+      setTimeout(() => {
+        this.prevVideoContext = wx.createVideoContext('prevVideo');
+        // 预加载但不播放
+        this.prevVideoContext.play();
+        setTimeout(() => {
+          this.prevVideoContext.pause();
+          this.prevVideoContext.seek(0);
+        }, 500);
+      }, 100);
+    }
+    
+    // 如果接近列表末尾，加载更多视频
+    if (currentVideoIndex >= videoList.length - 3 && !this.data.isLoadingMore && this.data.hasMoreVideos) {
+      this.loadVideoList();
+    }
   },
 
   // 检查关注状态
@@ -503,8 +598,20 @@ Page({
 
   // 页面卸载
   onUnload() {
-    if (this.videoContext) {
-      this.videoContext.pause();
+    // 清除定时器
+    if (this.data.animationTimer) {
+      clearTimeout(this.data.animationTimer);
+    }
+    
+    // 暂停视频
+    if (this.currentVideoContext) {
+      this.currentVideoContext.pause();
+    }
+    if (this.nextVideoContext) {
+      this.nextVideoContext.pause();
+    }
+    if (this.prevVideoContext) {
+      this.prevVideoContext.pause();
     }
   },
 
@@ -553,7 +660,7 @@ Page({
       const progress = Math.max(0, Math.min(100, ((touch.clientX - rect.left) / rect.width) * 100));
       const currentTime = (progress / 100) * this.data.videoDuration;
       this.setData({ progress });
-      this.videoContext.seek(currentTime);
+      this.currentVideoContext.seek(currentTime);
     }).exec();
   },
 
@@ -575,13 +682,13 @@ Page({
       query.equalTo("video", "!=", "");
       // 排除已浏览过的视频
       if (this.data.viewedVideoIds.length > 0) {
-        query.equalTo('objectId', "!=",this.data.viewedVideoIds);
+        query.equalTo('objectId', "!=", this.data.viewedVideoIds);
       }
       query.order('-createdAt');
       query.limit(this.data.videoPageSize);
       query.skip((page - 1) * this.data.videoPageSize);
       query.include('author');
-      // console.log('查询视频列表:', query.toJSON());
+      
       const result = await query.find();
       console.log('查询视频列表结果:', result);
       
@@ -606,6 +713,16 @@ Page({
           hasMoreVideos: videoList.length === this.data.videoPageSize
         });
       }
+
+      // 预加载下一个视频
+      if (!this.data.nextVideo && videoList.length > 0) {
+        const nextIndex = this.data.currentVideoIndex + 1;
+        if (nextIndex < this.data.videoList.length) {
+          this.setData({
+            nextVideo: this.data.videoList[nextIndex]
+          });
+        }
+      }
     } catch (error) {
       console.error('加载视频列表失败:', error);
       wx.showToast({
@@ -621,122 +738,341 @@ Page({
 
   // 处理触摸开始事件
   handleTouchStart(e) {
+    // 如果正在切换视频或评论弹窗打开，不处理滑动事件
+    if (this.data.isSwitching || this.data.showComment) return;
+    
+    const touch = e.touches[0];
+    
     this.setData({
-      startY: e.touches[0].clientY,
+      touchStartX: touch.clientX,
+      touchStartY: touch.clientY,
       touchStartTime: Date.now(),
+      touchActive: true,
+      dragDistance: 0,
       direction: ''
     });
   },
 
   // 处理触摸移动事件
   handleTouchMove(e) {
-    if (this.data.isSwitching) return;
+    // 如果正在切换视频或评论弹窗打开，不处理滑动事件
+    if (this.data.isSwitching || this.data.showComment) return;
     
-    const moveY = e.touches[0].clientY;
-    const diffY = moveY - this.data.startY;
+    if (!this.data.touchActive) return;
     
-    // 判断滑动方向
-    const direction = diffY < 0 ? 'up' : 'down';
+    const touch = e.touches[0];
+    const diffY = touch.clientY - this.data.touchStartY;
+    
+    // 如果是水平滑动，不处理
+    const diffX = touch.clientX - this.data.touchStartX;
+    if (Math.abs(diffX) > Math.abs(diffY)) return;
+    
+    // 如果还没有开始拖动，且移动距离超过阈值，开始拖动
+    if (!this.data.isDragging && Math.abs(diffY) > 10) {
+      this.setData({
+        isDragging: true,
+        showGestureIndicator: true
+      });
+    }
+    
+    if (!this.data.isDragging) return;
+    
+    // 计算拖动距离，添加阻尼效果
+    const dampingFactor = 0.5; // 阻尼系数，值越小阻力越大
+    const dragDistance = diffY * dampingFactor;
+    
+    // 更新方向提示
+    let direction = '';
+    if (dragDistance < -30) {
+      direction = 'up';
+    } else if (dragDistance > 30) {
+      direction = 'down';
+    }
+    
+    // 设置视频容器位置
+    // 默认位置是 -100vh，向上拖动是负值，向下拖动是正值
+    const translateY = -this.data.videoContainerHeight + dragDistance;
+    const videoContainerStyle = `transform: translateY(${translateY}px)`;
     
     this.setData({
-      moveY,
-      direction
+      dragDistance,
+      direction,
+      videoContainerStyle
     });
   },
 
   // 处理触摸结束事件
   handleTouchEnd(e) {
-    if (this.data.isSwitching) return;
+    // 如果正在切换视频或评论弹窗打开，不处理滑动事件
+    if (this.data.isSwitching || this.data.showComment) return;
+    
+    // 隐藏手势指示器
+    this.setData({
+      showGestureIndicator: false,
+      touchActive: false
+    });
+    
+    if (!this.data.isDragging) return;
     
     const endTime = Date.now();
     const touchDuration = endTime - this.data.touchStartTime;
-    const diffY = this.data.moveY - this.data.startY;
+    const diffY = this.data.dragDistance;
     const absY = Math.abs(diffY);
     
-    // 判断是否为有效的滑动手势（滑动距离足够大且速度足够快）
-    if (absY > 50 && touchDuration < 300) {
-      if (diffY < 0) { // 上滑
-        this.switchToNextVideo();
-      } else { // 下滑
-        this.switchToPrevVideo();
-      }
-    }
-  },
-
-  // 切换到下一个视频
-  switchToNextVideo() {
-    if (this.data.isSwitching) return;
+    // 重置拖动状态
+    this.setData({
+      isDragging: false
+    });
     
-    // 检查是否有下一个视频
-    if (this.data.currentVideoIndex < this.data.videoList.length - 1) {
-      this.switchVideo(this.data.currentVideoIndex + 1);
-    } else {
-      // 如果已经是最后一个视频，加载更多
-      if (this.data.hasMoreVideos && !this.data.isLoadingMore) {
-        this.setData({
-          isSwitching: true
-        });
-        
-        wx.showLoading({
-          title: '加载中...',
-        });
-        
-        this.loadVideoList().then(() => {
-          // 加载完成后，如果有新视频，切换到下一个
-          if (this.data.currentVideoIndex < this.data.videoList.length - 1) {
-            this.switchVideo(this.data.currentVideoIndex + 1);
+    // 判断是否为有效的滑动手势
+    // 1. 快速滑动：短时间内移动一定距离
+    // 2. 长距离滑动：移动距离超过阈值
+    if ((absY > 30 && touchDuration < 300) || absY > this.data.dragThreshold) {
+      if (diffY < 0) { // 上滑
+        // 检查是否有下一个视频
+        if (this.data.currentVideoIndex < this.data.videoList.length - 1) {
+          this.animateSwitchVideo('up', this.data.currentVideoIndex + 1);
+        } else {
+          // 如果已经是最后一个视频，加载更多
+          if (this.data.hasMoreVideos && !this.data.isLoadingMore) {
+            this.setData({
+              isSwitching: true
+            });
+            
+            wx.showLoading({
+              title: '加载中...',
+            });
+            
+            this.loadVideoList().then(() => {
+              // 加载完成后，如果有新视频，切换到下一个
+              if (this.data.currentVideoIndex < this.data.videoList.length - 1) {
+                this.animateSwitchVideo('up', this.data.currentVideoIndex + 1);
+              } else {
+                wx.showToast({
+                  title: '没有更多视频了',
+                  icon: 'none'
+                });
+                this.setData({
+                  isSwitching: false
+                });
+                // 恢复原位
+                this.resetPosition();
+              }
+              wx.hideLoading();
+            });
           } else {
             wx.showToast({
               title: '没有更多视频了',
               icon: 'none'
             });
-            this.setData({
-              isSwitching: false
-            });
+            // 恢复原位
+            this.resetPosition();
           }
-          wx.hideLoading();
-        });
-      } else {
-        wx.showToast({
-          title: '没有更多视频了',
-          icon: 'none'
-        });
+        }
+      } else { // 下滑
+        // 检查是否有上一个视频
+        if (this.data.currentVideoIndex > 0) {
+          this.animateSwitchVideo('down', this.data.currentVideoIndex - 1);
+        } else {
+          wx.showToast({
+            title: '已经是第一个视频',
+            icon: 'none'
+          });
+          // 恢复原位
+          this.resetPosition();
+        }
       }
+    } else {
+      // 如果不是有效的滑动手势，恢复原位
+      this.resetPosition();
     }
   },
 
-  // 切换到上一个视频
-  switchToPrevVideo() {
+  // 重置位置
+  resetPosition() {
+    const translateY = -this.data.videoContainerHeight;
+    this.setData({
+      videoContainerStyle: `transform: translateY(${translateY}px); transition: transform 0.3s ease`,
+      direction: ''
+    });
+    
+    // 300ms后清除过渡效果
+    setTimeout(() => {
+      this.setData({
+        videoContainerStyle: `transform: translateY(${translateY}px)`
+      });
+    }, 300);
+  },
+
+  // 带动画效果切换视频
+  animateSwitchVideo(direction, targetIndex) {
     if (this.data.isSwitching) return;
     
-    // 检查是否有上一个视频
-    if (this.data.currentVideoIndex > 0) {
-      this.switchVideo(this.data.currentVideoIndex - 1);
-    } else {
-      wx.showToast({
-        title: '已经是第一个视频',
-        icon: 'none'
+    const targetVideo = this.data.videoList[targetIndex];
+    if (!targetVideo) {
+      this.resetPosition();
+      return;
+    }
+    
+    this.setData({
+      isSwitching: true,
+      direction
+    });
+    
+    // 暂停当前视频
+    if (this.currentVideoContext) {
+      this.currentVideoContext.pause();
+    }
+    
+    // 更新当前视频索引
+    this.setData({
+      currentVideoIndex: targetIndex
+    });
+    
+    // 如果是向上滑动且已预加载了下一个视频
+    if (direction === 'up' && this.data.nextVideo && this.data.nextVideo.objectId === targetVideo.objectId) {
+      // 设置过渡动画 - 向上滑动到下一个视频
+      const translateY = -this.data.videoContainerHeight * 2; // 滑动到下一个视频位置
+      const videoContainerStyle = `transform: translateY(${translateY}px); transition: transform 0.3s ease`;
+      
+      this.setData({
+        videoContainerStyle,
+        nextVideoVisible: true
       });
+      
+      // 300ms后切换视频
+      this.data.animationTimer = setTimeout(() => {
+        // 将新视频ID添加到已浏览列表
+        const viewedVideoIds = [...this.data.viewedVideoIds];
+        if (!viewedVideoIds.includes(targetVideo.objectId)) {
+          viewedVideoIds.push(targetVideo.objectId);
+        }
+        
+        // 更新当前视频
+        this.setData({
+          note: {
+            ...this.data.nextVideo,
+            createTime: formatTime(this.data.nextVideo.createdAt)
+          },
+          viewedVideoIds,
+          videoContainerStyle: `transform: translateY(${-this.data.videoContainerHeight}px)`,
+          isSwitching: false,
+          direction: '',
+          progress: 0,
+          isExpanded: false
+        });
+        
+        // 播放新视频
+        this.currentVideoContext = this.nextVideoContext;
+        this.currentVideoContext.play();
+        
+        // 预加载新的上下个视频
+        this.preloadVideos();
+      }, 300);
+    } 
+    // 如果是向下滑动且已预加载了上一个视频
+    else if (direction === 'down' && this.data.prevVideo && this.data.prevVideo.objectId === targetVideo.objectId) {
+      // 设置过渡动画 - 向下滑动到上一个视频
+      const translateY = 0; // 滑动到上一个视频位置
+      const videoContainerStyle = `transform: translateY(${translateY}px); transition: transform 0.3s ease`;
+      
+      this.setData({
+        videoContainerStyle,
+        prevVideoVisible: true
+      });
+      
+      // 300ms后切换视频
+      this.data.animationTimer = setTimeout(() => {
+        // 将新视频ID添加到已浏览列表
+        const viewedVideoIds = [...this.data.viewedVideoIds];
+        if (!viewedVideoIds.includes(targetVideo.objectId)) {
+          viewedVideoIds.push(targetVideo.objectId);
+        }
+        
+        // 更新当前视频
+        this.setData({
+          note: {
+            ...this.data.prevVideo,
+            createTime: formatTime(this.data.prevVideo.createdAt)
+          },
+          viewedVideoIds,
+          videoContainerStyle: `transform: translateY(${-this.data.videoContainerHeight}px)`,
+          isSwitching: false,
+          direction: '',
+          progress: 0,
+          isExpanded: false
+        });
+        
+        // 播放新视频
+        this.currentVideoContext = this.prevVideoContext;
+        this.currentVideoContext.play();
+        
+        // 预加载新的上下个视频
+        this.preloadVideos();
+      }, 300);
+    }
+    // 如果没有预加载或预加载的不是目标视频，则正常加载
+    else {
+      // 设置过渡动画
+      const translateY = direction === 'up' ? 
+        -this.data.videoContainerHeight * 2 : // 向上滑动到下一个视频
+        0; // 向下滑动到上一个视频
+      const videoContainerStyle = `transform: translateY(${translateY}px); transition: transform 0.3s ease`;
+      
+      this.setData({
+        videoContainerStyle
+      });
+      
+      // 300ms后加载新视频
+      this.data.animationTimer = setTimeout(() => {
+        // 加载新视频数据
+        this.loadNoteData(targetVideo.objectId).then(() => {
+          // 将新视频ID添加到已浏览列表
+          const viewedVideoIds = [...this.data.viewedVideoIds];
+          if (!viewedVideoIds.includes(targetVideo.objectId)) {
+            viewedVideoIds.push(targetVideo.objectId);
+          }
+          
+          // 重置动画状态
+          this.setData({
+            viewedVideoIds,
+            videoContainerStyle: `transform: translateY(${-this.data.videoContainerHeight}px)`,
+            isSwitching: false,
+            direction: '',
+            progress: 0,
+            isExpanded: false
+          });
+          
+          // 播放新视频
+          this.currentVideoContext = wx.createVideoContext('currentVideo');
+          this.currentVideoContext.play();
+          
+          // 预加载新的上下个视频
+          this.preloadVideos();
+        });
+      }, 300);
     }
   },
 
-  // 切换到指定索引的视频
+  // 切换到指定索引的视频（不带动画，用于直接跳转）
   switchVideo(index) {
     if (this.data.isSwitching) return;
     
     this.setData({
-      isSwitching: true
+      isSwitching: true,
+      videoAnimationClass: 'scale-out' // 当前视频缩小淡出
     });
     
     // 暂停当前视频
-    if (this.videoContext) {
-      this.videoContext.pause();
+    if (this.currentVideoContext) {
+      this.currentVideoContext.pause();
     }
     
     const targetVideo = this.data.videoList[index];
     if (!targetVideo) {
       this.setData({
-        isSwitching: false
+        isSwitching: false,
+        videoAnimationClass: ''
       });
       return;
     }
@@ -756,14 +1092,24 @@ Page({
       
       this.setData({
         viewedVideoIds,
+        videoAnimationClass: 'scale-in', // 新视频放大淡入
         isSwitching: false,
         progress: 0,
         isExpanded: false
       });
       
       // 播放新视频
-      this.videoContext = wx.createVideoContext('myVideo');
-      this.videoContext.play();
+      this.currentVideoContext = wx.createVideoContext('currentVideo');
+      this.currentVideoContext.play();
+      
+      // 500ms后清除动画类
+      setTimeout(() => {
+        this.setData({
+          videoAnimationClass: ''
+        });
+      }, 500);
     });
-  }
+  },
+
+  // ... existing code ...
 }); 

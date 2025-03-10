@@ -98,7 +98,7 @@ page {
   width: 60px;
   height: 32px;
   background: #FE2C55;
-  border-radius: 6px;
+  border-radius: 50px;
   color: #fff;
   font-size: 14px;
   display: flex;
@@ -158,15 +158,19 @@ input {
   font-size: 13px;
 }
 
-.nav-scroll {
-  position: sticky;
-  top: 0;
+.nav-container {
+  position: fixed;
+  left: 0;
+  right: 0;
   background: #fff;
+  z-index: 99;
+}
+
+.nav-scroll {
   white-space: nowrap;
   height: 40px;
   padding: 0 12px;
   border-bottom: 1px solid #f5f5f5;
-  z-index: 99;
 }
 
 .nav-item {
@@ -260,18 +264,22 @@ input {
   bottom: 120rpx;
   width: 100rpx;
   height: 100rpx;
-  background: linear-gradient(to right, #fe2c55, #ff4d6d);
+  background: #ffffff;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4rpx 12rpx rgba(254, 44, 85, 0.4);
+  box-shadow: 0 6rpx 16rpx rgba(0, 0, 0, 0.1);
   z-index: 100;
+  transition: all 0.3s ease;
 }
 
-.publish-btn .plus {
-  color: #fff;
-  font-size: 60rpx;
-  font-weight: 300;
-  line-height: 1;
+.publish-btn:active {
+  transform: scale(0.95);
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.1);
+}
+
+.publish-btn image {
+  width: 60rpx;
+  height: 60rpx;
 }

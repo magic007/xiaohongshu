@@ -5,7 +5,11 @@ Component({
       type: String,
       value: '默认标题'
     },
-    content: String
+    content: String,
+    likeCount: {
+      type: Number,
+      value: 0
+    }
   },
   
   data: {

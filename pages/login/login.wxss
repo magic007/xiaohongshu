@@ -13,6 +13,7 @@
 .logo image {
   width: 160rpx;
   height: 160rpx;
+  border-radius: 50px;
 }
 
 .logo text {

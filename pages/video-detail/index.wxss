@@ -3,17 +3,63 @@
   height: 100vh;
   position: relative;
   background: #000;
+  overflow: hidden; /* 防止内容溢出 */
 }
 
-.main-video {
-  width: 100%;
-  height: calc(100vh - 100rpx); /* 减少 action-bar 高度 */
+/* 视频容器包装器 */
+.video-container-wrapper {
+  width: 100vw;
+  height: 100vh;
   position: fixed;
   top: 0;
   left: 0;
   z-index: 1;
+  overflow: hidden;
+}
+
+/* 视频容器 - 包含三个视频项 */
+.video-container {
+  width: 100%;
+  height: 300vh; /* 三倍视频高度 */
+  position: relative;
+  transform: translateY(-100vh); /* 默认显示中间的视频 */
+  will-change: transform; /* 提示浏览器优化动画性能 */
+}
+
+/* 视频项 - 每个视频的容器 */
+.video-item {
+  width: 100vw;
+  height: 100vh;
+  position: relative;
   background: #000;
-  padding-top: env(safe-area-inset-top); /* 适配刘海屏 */
+}
+
+/* 当前视频项 */
+.video-item.current {
+  z-index: 2;
+}
+
+.main-video {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1;
+  background: #000;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  will-change: opacity; /* 提示浏览器优化动画性能 */
+}
+
+.main-video.visible {
+  opacity: 1;
+  z-index: 2;
+}
+
+.main-video.hidden {
+  opacity: 0;
+  z-index: 1;
 }
 
 .nav-buttons {
@@ -64,6 +110,12 @@
   padding: 0;
   color: #fff;
   padding-bottom: 20rpx; /* 增加底部间距 */
+  transition: opacity 0.3s ease;
+  will-change: opacity; /* 提示浏览器优化动画性能 */
+}
+
+.content-container.fade {
+  opacity: 0.3;
 }
 
 .author-info {
@@ -480,6 +532,42 @@
   font-size: 28rpx;
 }
 
+/* 添加手势指示器样式 */
+.gesture-indicator {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
+  z-index: 100;
+}
+
+.gesture-indicator.active {
+  opacity: 1;
+}
+
+.gesture-indicator::after {
+  content: '';
+  width: 40rpx;
+  height: 40rpx;
+  border: 4rpx solid #fff;
+  border-radius: 50%;
+}
+
+/* 添加重置位置的动画效果 */
+.reset-position {
+  transition: transform 0.3s ease;
+}
+
 /* 视频切换提示 */
 .switch-tips {
   position: fixed;
@@ -491,50 +579,56 @@
   align-items: center;
   justify-content: center;
   opacity: 0;
-  transition: opacity 0.3s;
+  transition: opacity 0.3s, transform 0.3s;
   pointer-events: none;
   z-index: 100;
 }
 
-.switch-tips.up, .switch-tips.down {
+.switch-tips.up {
   opacity: 0.8;
+  transform: translate(-50%, -60%);
+}
+
+.switch-tips.down {
+  opacity: 0.8;
+  transform: translate(-50%, -40%);
 }
 
 .switch-icon {
-  width: 40px;
-  height: 40px;
+  width: 80rpx;
+  height: 80rpx;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.2);
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 10px;
+  margin-bottom: 20rpx;
   position: relative;
 }
 
 .switch-icon::before {
   content: '';
-  width: 15px;
-  height: 15px;
-  border-left: 2px solid #fff;
-  border-bottom: 2px solid #fff;
+  width: 30rpx;
+  height: 30rpx;
+  border-left: 4rpx solid #fff;
+  border-bottom: 4rpx solid #fff;
   position: absolute;
 }
 
 .switch-icon.up::before {
   transform: rotate(-135deg);
-  margin-top: 5px;
+  margin-top: 10rpx;
 }
 
 .switch-icon.down::before {
   transform: rotate(45deg);
-  margin-top: -5px;
+  margin-top: -10rpx;
 }
 
 .switch-text {
   color: #fff;
-  font-size: 14px;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  font-size: 28rpx;
+  text-shadow: 0 2rpx 4rpx rgba(0, 0, 0, 0.5);
 }
 
 /* 加载提示 */
@@ -551,22 +645,45 @@
 }
 
 .loading-spinner {
-  width: 30px;
-  height: 30px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-top: 2px solid #fff;
+  width: 60rpx;
+  height: 60rpx;
+  border: 4rpx solid rgba(255, 255, 255, 0.3);
+  border-top: 4rpx solid #fff;
   border-radius: 50%;
   animation: spin 1s linear infinite;
-  margin-bottom: 10px;
+  margin-bottom: 20rpx;
 }
 
 .loading-text {
   color: #fff;
-  font-size: 14px;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  font-size: 28rpx;
+  text-shadow: 0 2rpx 4rpx rgba(0, 0, 0, 0.5);
 }
 
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
+}
+
+/* 视频阴影层 - 增加过渡效果 */
+.video-shadow {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.3);
+  z-index: 2;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.video-shadow.active {
+  opacity: 1;
+}
+
+/* 底部操作栏淡出效果 */
+action-bar.fade {
+  opacity: 0.3;
 } 

@@ -61,7 +61,7 @@ Page({
     // 获取状态栏高度
     const systemInfo = wx.getSystemInfoSync();
     const statusBarHeight = systemInfo.statusBarHeight-3;
-    const navHeight = statusBarHeight + 48;
+    const navHeight = statusBarHeight + 48; // 导航栏高度
 
     this.setData({
       statusBarHeight,
@@ -111,6 +111,7 @@ Page({
         likes: note.likeCount || 0,
         commentCount: note.commentCount || 0,
         images: note.images || ['/assets/images/default-cover.png'],
+        coverImage: note.coverImage || '',
         createTime: note.createdAt.split(' ')[0]
       };
     });
